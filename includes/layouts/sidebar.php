@@ -93,6 +93,17 @@ function active($page, $current)
         <span>Data Ruangan</span>
       </a>
 
+      <a href="<?= $baseUrl ?>/admin/facility/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('indexz.php', $current); ?>">
+        <!-- Heroicon: Building -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 21h18M5 21V7l7-4 7 4v14" />
+        </svg>
+        <span>Data Fasilitas</span>
+      </a>
+
       <a href="../admin/users.php"
         class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('users.php', $current); ?>">
         <!-- Heroicon: Users -->
