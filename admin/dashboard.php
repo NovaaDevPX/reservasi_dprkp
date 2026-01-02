@@ -239,8 +239,11 @@ while ($row = mysqli_fetch_assoc($result)) {
       color: #38bdf8;
       font-size: 13px;
     }
-  </style>
 
+    .fc-event {
+      cursor: pointer;
+    }
+  </style>
 
 </head>
 
@@ -303,6 +306,11 @@ while ($row = mysqli_fetch_assoc($result)) {
         },
 
         events: allEvents,
+
+        eventClick: function(info) {
+          const id = info.event.id;
+          window.location.href = `reservation/detail.php?id=${id}`;
+        },
 
         eventDidMount: function(info) {
           const p = info.event.extendedProps;
