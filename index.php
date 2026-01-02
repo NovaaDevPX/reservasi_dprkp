@@ -3,42 +3,52 @@ session_start();
 include 'config/koneksi.php';
 
 if (isset($_POST['login'])) {
-  $username = mysqli_real_escape_string($koneksi, $_POST['username']);
-  $password = mysqli_real_escape_string($koneksi, $_POST['password']);
 
-  // ✅ GANTI username -> nip
+  $nip = mysqli_real_escape_string($koneksi, $_POST['username']);
+  $password = $_POST['password']; // ❗ JANGAN di-hash manual
+
+  // Ambil user berdasarkan NIP
   $query = mysqli_query(
     $koneksi,
-    "SELECT * FROM users WHERE nip='$username' AND password='$password'"
+    "SELECT * FROM users WHERE nip='$nip' LIMIT 1"
   );
 
-  // ❗ Cek dulu query berhasil atau tidak
   if (!$query) {
     die("Query error: " . mysqli_error($koneksi));
   }
 
-  $user = mysqli_fetch_assoc($query);
+  if (mysqli_num_rows($query) === 1) {
+    $user = mysqli_fetch_assoc($query);
 
-  if ($user) {
-    // ✅ SESUAI STRUKTUR DATABASE
-    $_SESSION['id_user'] = $user['id'];
-    $_SESSION['nama'] = $user['nama'];
-    $_SESSION['role'] = $user['role'];
+    // ✅ VERIFIKASI PASSWORD
+    if (password_verify($password, $user['password'])) {
 
-    // 🔀 Redirect berdasarkan role
-    if ($user['role'] == 'admin') {
-      header('Location: admin/dashboard.php');
-    } elseif ($user['role'] == 'pegawai') {
-      header('Location: pegawai/dashboard.php');
-    } elseif ($user['role'] == 'kepala_bagian') {
-      header('Location: kepala_bagian/dashboard.php');
+      $_SESSION['id_user'] = $user['id'];
+      $_SESSION['nama']    = $user['nama'];
+      $_SESSION['role']    = $user['role'];
+
+      // 🔀 Redirect sesuai role
+      switch ($user['role']) {
+        case 'admin':
+          header('Location: admin/dashboard.php');
+          break;
+        case 'pegawai':
+          header('Location: pegawai/dashboard.php');
+          break;
+        case 'kepala_bagian':
+          header('Location: kepala_bagian/dashboard.php');
+          break;
+      }
+      exit();
     }
-    exit();
-  } else {
-    echo "<script>alert('Login gagal! NIP atau password salah.');</script>";
   }
+
+  // ❌ Jika gagal
+  echo "<script>alert('Login gagal! NIP atau password salah.');</script>";
 }
 ?>
+
+
 <!DOCTYPE html>
 <html lang="id">
 

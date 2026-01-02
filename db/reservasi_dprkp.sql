@@ -137,9 +137,25 @@ CREATE TABLE notifikasi (
 -- DATA USERS
 -- =========================================
 INSERT INTO users (nip, nama, password, role) VALUES
-('pegawai123','Budi Pegawai','password','pegawai'),
-('admin456','Siti Admin','password','admin'),
-('kabag789','Bapak Kepala Bagian','password','kepala_bagian');
+(
+  'pegawai123',
+  'Budi Pegawai',
+  '$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6',
+  'pegawai'
+),
+(
+  'admin456',
+  'Siti Admin',
+  '$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6',
+  'admin'
+),
+(
+  'kabag789',
+  'Bapak Kepala Bagian',
+  '$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6',
+  'kepala_bagian'
+);
+
 
 -- =========================================
 -- DATA RUANGAN
