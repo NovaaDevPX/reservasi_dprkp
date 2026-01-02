@@ -45,8 +45,8 @@ function active($path, $currentUri)
 
     <!-- ================= PEGAWAI ================= -->
     <?php if ($role === 'pegawai'): ?>
-      <a href="<?= $baseUrl ?>/pegawai/ajukan.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/pegawai/ajukan', $currentUri); ?>">
+      <a href="<?= $baseUrl ?>/pegawai/make-reservation/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/pegawai/make-reservation', $currentUri); ?>">
         <!-- Plus -->
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -54,8 +54,8 @@ function active($path, $currentUri)
         <span>Ajukan Reservasi</span>
       </a>
 
-      <a href="<?= $baseUrl ?>/pegawai/riwayat.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/pegawai/riwayat', $currentUri); ?>">
+      <a href="<?= $baseUrl ?>/pegawai/reservation-history/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/pegawai/reservation-history', $currentUri); ?>">
         <!-- Clock -->
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
