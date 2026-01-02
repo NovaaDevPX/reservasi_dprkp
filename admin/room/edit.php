@@ -97,11 +97,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-slate-100">
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
   <?php include '../../includes/layouts/sidebar.php'; ?>
 
-  <div class="main-content p-6 max-w-3xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6">Edit Ruangan</h1>
+  <div class="main-content p-4 sm:p-6 lg:p-8">
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">Edit Data Ruangan</h1>
+        <p class="text-slate-600">
+          Kelola ruang rapat dan aula beserta fasilitas & statusnya.
+        </p>
+      </div>
+
+      <a href="create.php"
+        class="btn-primary inline-flex items-center gap-2 text-white px-6 py-3 rounded-xl font-semibold transition hover:scale-105">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 4v16m8-8H4" />
+        </svg>
+        Tambah Ruangan
+      </a>
+    </div>
 
     <form method="POST" class="bg-white p-6 rounded-2xl shadow space-y-6">
 

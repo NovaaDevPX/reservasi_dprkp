@@ -43,12 +43,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-slate-100">
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
   <?php include '../../includes/layouts/sidebar.php'; ?>
 
-  <div class="main-content p-6 max-w-xl">
+  <div class="main-content p-4 sm:p-6 lg:p-8">
 
-    <h1 class="text-2xl font-bold mb-6">Tambah Fasilitas</h1>
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">Tambah Data Fasilitas</h1>
+        <p class="text-slate-600 text-base">
+          Kelola fasilitas yang tersedia pada ruangan & aula dengan mudah dan efisien.
+        </p>
+      </div>
+    </div>
 
     <?php if ($error): ?>
       <div class="mb-4 bg-red-100 text-red-700 px-4 py-2 rounded-lg">
