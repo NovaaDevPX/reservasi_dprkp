@@ -69,8 +69,8 @@ function active($path, $currentUri)
     <?php if ($role === 'admin'): ?>
 
       <!-- Reservasi -->
-      <a href="<?= $baseUrl ?>/admin/reservasi.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/reservasi', $currentUri); ?>">
+      <a href="<?= $baseUrl ?>/admin/reservation/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/reservation', $currentUri); ?>">
         <!-- Calendar -->
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
