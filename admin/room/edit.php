@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../../config/koneksi.php';
+include '../../includes/notification-helper.php';
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   header("Location: ../../index.php");
@@ -19,7 +20,6 @@ $id = (int) $_GET['id'];
 ====================== */
 $ruanganQ = mysqli_query($koneksi, "SELECT * FROM ruangan WHERE id = $id");
 $ruangan  = mysqli_fetch_assoc($ruanganQ);
-
 if (!$ruangan) {
   header("Location: index.php");
   exit;
@@ -35,7 +35,6 @@ $qSelected = mysqli_query($koneksi, "
   JOIN fasilitas f ON rf.fasilitas_id = f.id
   WHERE rf.ruangan_id = $id
 ");
-
 while ($f = mysqli_fetch_assoc($qSelected)) {
   $selectedFasilitas[$f['id']] = $f['nama'];
 }
@@ -50,10 +49,22 @@ $fasilitas = mysqli_query($koneksi, "SELECT * FROM fasilitas ORDER BY nama ASC")
 ====================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-  $nama      = $_POST['nama_ruangan'];
+  $nama      = trim($_POST['nama_ruangan']);
   $kapasitas = (int) $_POST['kapasitas'];
   $status    = $_POST['status'];
   $dipilih   = $_POST['fasilitas'] ?? [];
+
+  $perubahan = [];
+
+  if ($nama !== $ruangan['nama_ruangan']) {
+    $perubahan[] = "Nama: \"{$ruangan['nama_ruangan']}\" → \"$nama\"";
+  }
+  if ($kapasitas != $ruangan['kapasitas']) {
+    $perubahan[] = "Kapasitas: {$ruangan['kapasitas']} → $kapasitas";
+  }
+  if ($status !== $ruangan['status']) {
+    $perubahan[] = "Status: {$ruangan['status']} → $status";
+  }
 
   mysqli_begin_transaction($koneksi);
   try {
@@ -66,11 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       WHERE id = $id
     ");
 
-    // reset fasilitas
-    mysqli_query($koneksi, "
-      DELETE FROM ruangan_fasilitas WHERE ruangan_id = $id
-    ");
-
+    mysqli_query($koneksi, "DELETE FROM ruangan_fasilitas WHERE ruangan_id = $id");
     foreach ($dipilih as $fid) {
       mysqli_query($koneksi, "
         INSERT INTO ruangan_fasilitas (ruangan_id, fasilitas_id)
@@ -79,6 +86,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     mysqli_commit($koneksi);
+
+    /* ======================
+       NOTIFIKASI
+    ====================== */
+    $pesan = "Data ruangan \"$nama\" telah diperbarui.";
+    if (!empty($perubahan)) {
+      $pesan .= "\nPerubahan:\n- " . implode("\n- ", $perubahan);
+    }
+
+    kirimNotifikasiByRole(
+      $koneksi,
+      ['admin', 'kepala_bagian'],
+      'Perubahan Data Ruangan',
+      $pesan
+    );
+
     header("Location: index.php?success=update");
     exit;
   } catch (Exception $e) {
@@ -210,7 +233,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     document.addEventListener('click', e => {
-      if (!e.target.closest('.relative')) dropdown.classList.add('hidden');
+      if (!e.target.closest('#dropdown') && !e.target.closest('#search')) {
+        dropdown.classList.add('hidden');
+      }
     });
 
     function filterFacility() {

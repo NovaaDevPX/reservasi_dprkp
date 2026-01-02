@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../../config/koneksi.php';
+include '../../includes/notification-helper.php';
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   header("Location: ../../index.php");
@@ -11,13 +12,16 @@ $fasilitas = mysqli_query($koneksi, "SELECT * FROM fasilitas ORDER BY nama ASC")
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-  $nama      = $_POST['nama_ruangan'];
+  $nama      = trim($_POST['nama_ruangan']);
   $kapasitas = (int) $_POST['kapasitas'];
   $status    = $_POST['status'];
   $dipilih   = $_POST['fasilitas'] ?? [];
 
   mysqli_begin_transaction($koneksi);
+
   try {
+
+    // insert ruangan
     mysqli_query($koneksi, "
       INSERT INTO ruangan (nama_ruangan, kapasitas, status)
       VALUES ('$nama', $kapasitas, '$status')
@@ -25,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $rid = mysqli_insert_id($koneksi);
 
+    // insert fasilitas ruangan
     foreach ($dipilih as $fid) {
       mysqli_query($koneksi, "
         INSERT INTO ruangan_fasilitas (ruangan_id, fasilitas_id)
@@ -33,6 +38,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     mysqli_commit($koneksi);
+
+    /* =====================
+       KIRIM NOTIFIKASI
+    ===================== */
+    kirimNotifikasiByRole(
+      $koneksi,
+      ['admin', 'kepala_bagian'],
+      'Ruangan Baru Ditambahkan',
+      "Ruangan \"$nama\" telah ditambahkan dengan kapasitas $kapasitas orang."
+    );
+
     header("Location: index.php?success=create");
     exit;
   } catch (Exception $e) {
