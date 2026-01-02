@@ -2,6 +2,7 @@
 // ================================
 // KONEKSI DATABASE
 // ================================
+session_start();
 include '../config/koneksi.php';
 
 // ================================
@@ -80,84 +81,184 @@ while ($row = mysqli_fetch_assoc($result)) {
   <title>Kalender Reservasi</title>
 
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #f8fafc;
+    :root {
+      --bg: #f8fafc;
+      --card: rgba(255, 255, 255, .82);
+      --border: rgba(226, 232, 240, .8);
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --glass: blur(16px);
     }
 
-    .main-content {
-      margin-left: 260px;
-      padding: 24px;
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
-    }
-
-    h1 {
-      font-size: 22px;
-      margin-bottom: 12px;
-      color: #1e293b;
-    }
-
-    /* FILTER */
     .filter-bar {
       display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 14px;
+      margin-bottom: 22px;
     }
 
     .filter-bar select {
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid #e5e7eb;
+      padding: 10px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      backdrop-filter: var(--glass);
       font-size: 14px;
-      background: #fff;
+      font-weight: 500;
+      color: var(--text);
+      transition: .25s;
     }
 
-    /* EVENT BULAT */
-    .fc-event {
-      border-radius: 999px !important;
-      padding: 4px 10px;
+    .filter-bar select:hover {
+      border-color: var(--primary);
+    }
+
+    .fc {
+      background: var(--card);
+      backdrop-filter: var(--glass);
+      border-radius: 20px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      animation: fadeUp .35s ease;
+    }
+
+    .fc-toolbar {
+      margin-bottom: 18px !important;
+    }
+
+    .fc-toolbar-title {
+      font-size: 20px !important;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .fc-button {
+      border: 1px solid var(--border) !important;
+      background: #fff !important;
+      color: var(--text) !important;
+      padding: 7px 14px !important;
+      font-weight: 600;
+      text-transform: capitalize !important;
+      border-radius: 12px !important;
+      transition: .2s;
+    }
+
+    .fc-button:hover {
+      background: var(--primary-soft) !important;
+      color: var(--primary) !important;
+    }
+
+    .fc-button-active {
+      background: var(--primary) !important;
+      color: #fff !important;
+      border-color: var(--primary) !important;
+    }
+
+    .fc-theme-standard td,
+    .fc-theme-standard th {
+      border-color: var(--border);
+    }
+
+    .fc-col-header-cell {
+      padding: 10px 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .fc-day-today {
+      background: rgba(37, 99, 235, .06) !important;
+    }
+
+    .fc-daygrid-day-number {
       font-size: 12px;
       font-weight: 600;
-      cursor: pointer;
+      color: var(--muted);
     }
 
-    /* TOOLTIP */
+    .fc-event {
+      border-radius: 999px !important;
+      padding: 5px 12px !important;
+      font-size: 11.5px !important;
+      font-weight: 600;
+      border: none !important;
+      color: #fff !important;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, .35);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .fc-event:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 16px 36px rgba(37, 99, 235, .45);
+    }
+
     .fc-tooltip {
       position: fixed;
       z-index: 99999;
-      background: #0f172a;
+      background: linear-gradient(135deg, #020617, #0f172a);
       color: #fff;
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 14px 16px;
+      border-radius: 14px;
       font-size: 12px;
-      line-height: 1.5;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+      line-height: 1.6;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, .45);
       pointer-events: none;
-      max-width: 280px;
+      max-width: 260px;
+      animation: pop .15s ease;
+    }
+
+    @keyframes pop {
+      from {
+        transform: scale(.95);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     .fc-tooltip strong {
       color: #38bdf8;
+      font-size: 13px;
     }
   </style>
+
+
 </head>
 
-<body>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
 
   <?php include '../includes/layouts/sidebar.php'; ?>
 
-  <div class="main-content">
+  <div class="main-content p-4 sm:p-6 lg:p-8">
     <div class="card">
-      <h1>📅 Kalender Reservasi Ruangan</h1>
+      <!-- HEADER -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-800 mb-2">Dashboard</h1>
+          <p class="text-slate-600 text-base">
+            Pantau dan kelola seluruh data reservasi ruangan dan aula secara terpusat dan efisien.
+          </p>
+        </div>
+      </div>
 
       <!-- FILTER -->
       <div class="filter-bar">
@@ -171,7 +272,10 @@ while ($row = mysqli_fetch_assoc($result)) {
         </select>
       </div>
 
-      <div id="calendar"></div>
+      <div class="max-w-5xl mx-auto">
+        <div id="calendar"></div>
+      </div>
+
     </div>
   </div>
 
@@ -187,6 +291,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
+        eventDisplay: 'dot',
         locale: 'id',
         height: 'auto',
         dayMaxEvents: 3,
