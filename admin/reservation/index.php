@@ -199,17 +199,17 @@ if (!$query) {
                   <div x-show="open" x-cloak @click.outside="open=false"
                     class="absolute right-2 w-40 bg-white rounded-xl shadow border z-50">
                     <a href="detail.php?id=<?= $row['id']; ?>"
-                      class="block px-4 py-2 hover:bg-slate-100 rounded-t-xl">
+                      class="block text-left px-4 py-2 hover:bg-slate-100 rounded-t-xl">
                       Detail
                     </a>
 
                     <?php if ($row['status'] === 'Menunggu Admin'): ?>
                       <a href="approve.php?id=<?= $row['id']; ?>"
-                        class="block px-4 py-2 text-emerald-600 hover:bg-emerald-50">
+                        class="block text-left px-4 py-2 text-emerald-600 hover:bg-emerald-50">
                         Setujui
                       </a>
                       <a href="reject.php?id=<?= $row['id']; ?>"
-                        class="block px-4 py-2 text-red-600 hover:bg-red-50 rounded-b-xl">
+                        class="block text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-b-xl">
                         Tolak
                       </a>
                     <?php endif; ?>
