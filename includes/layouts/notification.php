@@ -30,6 +30,10 @@ if (isset($_GET['success'])) {
       $title = 'Berhasil';
       $message = 'Data berhasil dihapus.';
       break;
+    case 'reject':
+      $title = 'Berhasil';
+      $message = 'Data berhasil ditolak.';
+      break;
     default:
       $title = 'Berhasil';
       $message = 'Aksi berhasil dilakukan.';
@@ -46,6 +50,10 @@ if (isset($_GET['error'])) {
     case 'used':
       $title = 'Gagal';
       $message = 'Data tidak dapat dihapus karena masih digunakan.';
+      break;
+    case 'invalid_id':
+      $title = 'Berhasil';
+      $message = 'Data Tidak berhasil.';
       break;
     default:
       $title = 'Gagal';
@@ -85,7 +93,7 @@ $icons = [
 
 <!-- NOTIFICATION -->
 <div id="notification"
-  class="fixed top-5 right-5 z-50 w-[360px] animate-slide-in">
+  class="fixed top-5 right-5 z-[9999999] w-[360px] animate-slide-in">
 
   <div class="border-l-4 <?= $styles[$type]; ?> rounded-xl shadow-lg p-4 flex gap-3">
 

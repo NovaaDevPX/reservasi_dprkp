@@ -2,24 +2,42 @@
 session_start();
 include '../../config/koneksi.php';
 
+/* =====================
+   AUTH ADMIN
+===================== */
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   header("Location: ../../index.php");
   exit;
 }
 
-$id = (int) ($_GET['id'] ?? 0);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $alasan = mysqli_real_escape_string($koneksi, $_POST['alasan']);
-
-  mysqli_query($koneksi, "
-    UPDATE reservasi 
-    SET status = 'Ditolak', alasan_tolak = '$alasan'
-    WHERE id = $id
-  ");
-
-  header("Location: index.php");
+/* =====================
+   VALIDASI ID
+===================== */
+$id = intval($_GET['id'] ?? 0);
+if (!$id) {
+  header("Location: index.php?error=invalid_id");
   exit;
+}
+
+/* =====================
+   HANDLE SUBMIT
+===================== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $alasan = trim($_POST['alasan'] ?? '');
+
+  if ($alasan !== '') {
+    $alasan = mysqli_real_escape_string($koneksi, $alasan);
+
+    mysqli_query($koneksi, "
+      UPDATE reservasi 
+      SET status = 'Ditolak',
+          alasan_tolak = '$alasan'
+      WHERE id = $id
+    ");
+
+    header("Location: index.php?success=reject");
+    exit;
+  }
 }
 ?>
 
@@ -28,30 +46,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
   <meta charset="UTF-8">
-  <title>Tolak Reservasi</title>
+  <title>Tolak Reservasi | Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+
   <?php include '../../includes/layouts/sidebar.php'; ?>
 
-  <div class="main-content p-8">
-    <div class="max-w-lg bg-white rounded-2xl shadow p-6">
-      <h1 class="text-xl font-bold mb-4 text-red-600">Tolak Reservasi</h1>
+  <div class="main-content p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
 
-      <form method="POST">
-        <label class="block text-sm font-medium mb-2">Alasan Penolakan</label>
-        <textarea name="alasan" required
-          class="w-full border rounded-xl p-3 mb-4"
-          placeholder="Masukkan alasan penolakan..."></textarea>
-
-        <div class="flex gap-3">
-          <button class="px-4 py-2 bg-red-600 text-white rounded-xl">Tolak</button>
-          <a href="index.php" class="px-4 py-2 bg-slate-200 rounded-xl">Batal</a>
-        </div>
-      </form>
+    <!-- HEADER -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-slate-800 mb-2">Tolak Reservasi</h1>
+      <a href="detail.php?id=<?= $id; ?>" class="text-blue-600 hover:underline text-sm">
+        ← Kembali ke detail reservasi
+      </a>
     </div>
+
+    <!-- CARD -->
+    <div class="bg-white rounded-2xl shadow p-6 space-y-6">
+
+      <div>
+        <p class="text-sm text-slate-500 mb-1">Alasan Penolakan</p>
+        <p class="text-slate-700 text-sm">
+          Silakan isi alasan penolakan agar pemohon mengetahui penyebab reservasi ditolak.
+        </p>
+      </div>
+
+      <form method="POST" class="space-y-6">
+
+        <textarea
+          name="alasan"
+          rows="5"
+          required
+          placeholder="Contoh: Jadwal ruangan bentrok dengan kegiatan lain..."
+          class="w-full border border-slate-300 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"></textarea>
+
+        <div class="flex items-center gap-3">
+          <button
+            type="submit"
+            class="inline-flex items-center px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition">
+            Tolak Reservasi
+          </button>
+
+          <a
+            href="detail.php?id=<?= $id; ?>"
+            class="inline-flex items-center px-5 py-2.5 bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-300 transition">
+            Batal
+          </a>
+        </div>
+
+      </form>
+
+    </div>
+
   </div>
+
 </body>
 
 </html>
