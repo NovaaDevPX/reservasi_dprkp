@@ -2,23 +2,80 @@
 session_start();
 include '../../config/koneksi.php';
 
+/* =====================
+   AUTH ADMIN
+===================== */
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   header("Location: ../../index.php");
   exit;
 }
 
-$id = (int) ($_GET['id'] ?? 0);
+/* =====================
+   VALIDASI ID
+===================== */
+$id = $_GET['id'] ?? '';
+$id = intval($id);
 
-$q = mysqli_query($koneksi, "
-  SELECT r.*, u.nama, u.nip, ru.nama_ruangan
+if (!$id) {
+  header("Location: index.php");
+  exit;
+}
+
+/* =====================
+   DATA RESERVASI
+===================== */
+$reservasi = mysqli_query($koneksi, "
+  SELECT 
+    r.*,
+    u.nama AS nama_user,
+    u.nip,
+    ru.nama_ruangan,
+    ru.kapasitas
   FROM reservasi r
   JOIN users u ON r.user_id = u.id
   JOIN ruangan ru ON r.ruangan_id = ru.id
   WHERE r.id = $id
+  LIMIT 1
 ");
 
-$data = mysqli_fetch_assoc($q);
-if (!$data) die('Data tidak ditemukan');
+$data = mysqli_fetch_assoc($reservasi);
+
+if (!$data) {
+  header("Location: index.php");
+  exit;
+}
+
+/* =====================
+   FASILITAS RUANGAN
+===================== */
+$fasilitas_ruangan = mysqli_query($koneksi, "
+  SELECT f.nama, rf.qty
+  FROM ruangan_fasilitas rf
+  JOIN fasilitas f ON rf.fasilitas_id = f.id
+  WHERE rf.ruangan_id = {$data['ruangan_id']}
+");
+
+/* =====================
+   FASILITAS RESERVASI
+===================== */
+$fasilitas_reservasi = mysqli_query($koneksi, "
+  SELECT f.nama, rf.qty
+  FROM reservasi_fasilitas rf
+  JOIN fasilitas f ON rf.fasilitas_id = f.id
+  WHERE rf.reservasi_id = $id
+");
+
+/* =====================
+   STATUS BADGE
+===================== */
+$statusClass = match ($data['status']) {
+  'Disetujui' => 'bg-emerald-100 text-emerald-700',
+  'Menunggu Admin' => 'bg-amber-100 text-amber-700',
+  'Menunggu Kepala Bagian' => 'bg-sky-100 text-sky-700',
+  'Ditolak' => 'bg-red-100 text-red-700',
+  'Dibatalkan' => 'bg-slate-200 text-slate-600',
+  default => 'bg-slate-100 text-slate-600'
+};
 ?>
 
 <!DOCTYPE html>
@@ -26,49 +83,120 @@ if (!$data) die('Data tidak ditemukan');
 
 <head>
   <meta charset="UTF-8">
-  <title>Detail Reservasi</title>
+  <title>Detail Reservasi | Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+
   <?php include '../../includes/layouts/sidebar.php'; ?>
 
-  <div class="main-content p-8">
-    <div class="max-w-2xl bg-white rounded-2xl shadow p-6">
-      <h1 class="text-2xl font-bold mb-4">Detail Reservasi</h1>
+  <div class="main-content p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
 
-      <dl class="space-y-3 text-sm">
-        <div><strong>Pemohon:</strong> <?= $data['nama']; ?> (<?= $data['nip']; ?>)</div>
-        <div><strong>Ruangan:</strong> <?= $data['nama_ruangan']; ?></div>
-        <div><strong>Tanggal:</strong> <?= date('d M Y', strtotime($data['tanggal'])); ?></div>
-        <div><strong>Waktu:</strong> <?= substr($data['jam_mulai'], 0, 5); ?> - <?= substr($data['jam_selesai'], 0, 5); ?></div>
-        <div><strong>Peserta:</strong> <?= $data['jumlah_peserta']; ?> orang</div>
-        <div><strong>Status:</strong> <?= $data['status']; ?></div>
+    <!-- HEADER -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-slate-800 mb-2">Detail Reservasi</h1>
+      <a href="index.php" class="text-blue-600 hover:underline text-sm">
+        ← Kembali ke daftar
+      </a>
+    </div>
+
+    <!-- CARD -->
+    <div class="bg-white rounded-2xl shadow p-6 space-y-8">
+
+      <!-- INFO UTAMA -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
         <div>
-          <strong>Keperluan:</strong>
-          <p class="mt-1 text-slate-600"><?= nl2br(htmlspecialchars($data['keperluan'])); ?></p>
+          <p class="text-sm text-slate-500">Pemohon</p>
+          <p class="font-semibold text-slate-800"><?= htmlspecialchars($data['nama_user']); ?></p>
+          <p class="text-xs text-slate-500"><?= $data['nip']; ?></p>
         </div>
 
-        <?php if ($data['alasan_tolak']): ?>
-          <div class="text-red-600">
-            <strong>Alasan Ditolak:</strong>
+        <div>
+          <p class="text-sm text-slate-500">Status</p>
+          <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold <?= $statusClass; ?>">
+            <?= $data['status']; ?>
+          </span>
+        </div>
+
+        <div>
+          <p class="text-sm text-slate-500">Ruangan</p>
+          <p class="font-semibold"><?= htmlspecialchars($data['nama_ruangan']); ?></p>
+          <p class="text-xs text-slate-500">Kapasitas: <?= $data['kapasitas']; ?> orang</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-slate-500">Tanggal & Waktu</p>
+          <p class="font-semibold">
+            <?= date('d M Y', strtotime($data['tanggal'])); ?>
+          </p>
+          <p class="text-sm text-slate-600">
+            <?= substr($data['jam_mulai'], 0, 5); ?> -
+            <?= substr($data['jam_selesai'], 0, 5); ?>
+          </p>
+        </div>
+
+        <div>
+          <p class="text-sm text-slate-500">Jumlah Peserta</p>
+          <p class="font-semibold"><?= $data['jumlah_peserta'] ?? '-'; ?> orang</p>
+        </div>
+
+      </div>
+
+      <!-- KEPERLUAN -->
+      <div>
+        <p class="text-sm text-slate-500 mb-1">Keperluan</p>
+        <div class="bg-slate-50 border rounded-xl p-4 text-slate-700">
+          <?= nl2br(htmlspecialchars($data['keperluan'])); ?>
+        </div>
+      </div>
+
+      <!-- FASILITAS RUANGAN -->
+      <div>
+        <h3 class="font-semibold text-slate-800 mb-3">Fasilitas Ruangan</h3>
+        <div class="flex flex-wrap gap-2">
+          <?php if (mysqli_num_rows($fasilitas_ruangan) > 0): ?>
+            <?php while ($f = mysqli_fetch_assoc($fasilitas_ruangan)): ?>
+              <span class="px-3 py-1 bg-slate-100 rounded-full text-sm">
+                <?= htmlspecialchars($f['nama']); ?> (<?= $f['qty']; ?>)
+              </span>
+            <?php endwhile; ?>
+          <?php else: ?>
+            <span class="text-slate-500 italic">Tidak ada fasilitas</span>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- FASILITAS DIPESAN -->
+      <div>
+        <h3 class="font-semibold text-slate-800 mb-3">Fasilitas Digunakan</h3>
+        <div class="flex flex-wrap gap-2">
+          <?php if (mysqli_num_rows($fasilitas_reservasi) > 0): ?>
+            <?php while ($f = mysqli_fetch_assoc($fasilitas_reservasi)): ?>
+              <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                <?= htmlspecialchars($f['nama']); ?> (<?= $f['qty']; ?>)
+              </span>
+            <?php endwhile; ?>
+          <?php else: ?>
+            <span class="text-slate-500 italic">Tidak ada fasilitas khusus</span>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- ALASAN TOLAK -->
+      <?php if ($data['status'] === 'Ditolak' && $data['alasan_tolak']): ?>
+        <div>
+          <h3 class="font-semibold text-red-700 mb-2">Alasan Penolakan</h3>
+          <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
             <?= nl2br(htmlspecialchars($data['alasan_tolak'])); ?>
           </div>
-        <?php endif; ?>
-      </dl>
+        </div>
+      <?php endif; ?>
 
-      <div class="mt-6 flex gap-3">
-        <?php if ($data['status'] === 'Menunggu Admin'): ?>
-          <a href="approve.php?id=<?= $id; ?>"
-            class="px-4 py-2 bg-emerald-600 text-white rounded-xl">Setujui</a>
-          <a href="reject.php?id=<?= $id; ?>"
-            class="px-4 py-2 bg-red-600 text-white rounded-xl">Tolak</a>
-        <?php endif; ?>
-
-        <a href="index.php" class="px-4 py-2 bg-slate-200 rounded-xl">Kembali</a>
-      </div>
     </div>
   </div>
+
 </body>
 
 </html>
