@@ -8,17 +8,21 @@ require_once __DIR__ . '/../base-url.php';
 $nama = $_SESSION['nama'] ?? 'User';
 $role = $_SESSION['role'] ?? 'pegawai';
 
-$current = basename($_SERVER['PHP_SELF']);
+/**
+ * Active menu berdasarkan URL
+ * contoh: active('/admin/room')
+ */
+$currentUri = $_SERVER['REQUEST_URI'];
 
-function active($page, $current)
+function active($path, $currentUri)
 {
-  return $page === $current
+  return str_contains($currentUri, $path)
     ? 'bg-blue-600 text-white'
     : 'text-slate-300 hover:bg-slate-800 hover:text-white';
 }
 ?>
 
-<!-- Tailwind CDN -->
+<!-- Tailwind -->
 <script src="https://cdn.tailwindcss.com"></script>
 
 <aside class="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-900 to-slate-950 text-white shadow-xl">
@@ -32,36 +36,32 @@ function active($page, $current)
   <!-- MENU -->
   <nav class="px-4 py-6 space-y-2">
 
-    <!-- ================= DASHBOARD (SEMUA ROLE) ================= -->
+    <!-- DASHBOARD -->
     <a href="<?= $baseUrl ?>/<?= $role ?>/dashboard.php"
-      class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('dashboard.php', $current); ?>">
-      <!-- Heroicon: Home -->
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-        viewBox="0 0 24 24">
+      class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/dashboard.php', $currentUri); ?>">
+      <!-- Home -->
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"
           d="M3 9.75L12 3l9 6.75V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" />
       </svg>
-      <span class="font-medium">Dashboard</span>
+      <span>Dashboard</span>
     </a>
 
     <!-- ================= PEGAWAI ================= -->
     <?php if ($role === 'pegawai'): ?>
-      <a href="../pegawai/ajukan.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('ajukan.php', $current); ?>">
-        <!-- Heroicon: Plus -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M12 4v16m8-8H4" />
+      <a href="<?= $baseUrl ?>/pegawai/ajukan.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/pegawai/ajukan', $currentUri); ?>">
+        <!-- Plus -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         <span>Ajukan Reservasi</span>
       </a>
 
-      <a href="../pegawai/riwayat.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('riwayat.php', $current); ?>">
-        <!-- Heroicon: Clock -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
+      <a href="<?= $baseUrl ?>/pegawai/riwayat.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/pegawai/riwayat', $currentUri); ?>">
+        <!-- Clock -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M12 6v6l4 2M12 22a10 10 0 100-20 10 10 0 000 20z" />
         </svg>
@@ -71,44 +71,44 @@ function active($page, $current)
 
     <!-- ================= ADMIN ================= -->
     <?php if ($role === 'admin'): ?>
-      <a href="../admin/reservasi.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('reservasi.php', $current); ?>">
-        <!-- Heroicon: Calendar -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
+
+      <!-- Reservasi -->
+      <a href="<?= $baseUrl ?>/admin/reservasi.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/reservasi', $currentUri); ?>">
+        <!-- Calendar -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <span>Data Reservasi</span>
       </a>
 
+      <!-- Ruangan -->
       <a href="<?= $baseUrl ?>/admin/room/index.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('index.php', $current); ?>">
-        <!-- Heroicon: Building -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/room', $currentUri); ?>">
+        <!-- Office Building -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
-            d="M3 21h18M5 21V7l7-4 7 4v14" />
+            d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m-1 4h1m4-4h1m-1 4h1" />
         </svg>
         <span>Data Ruangan</span>
       </a>
 
+      <!-- Fasilitas -->
       <a href="<?= $baseUrl ?>/admin/facility/index.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('indexz.php', $current); ?>">
-        <!-- Heroicon: Building -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/facility', $currentUri); ?>">
+        <!-- Squares -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
-            d="M3 21h18M5 21V7l7-4 7 4v14" />
+            d="M4 6h6v6H4zM14 6h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
         </svg>
         <span>Data Fasilitas</span>
       </a>
 
-      <a href="../admin/users.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('users.php', $current); ?>">
-        <!-- Heroicon: Users -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
+      <!-- Users -->
+      <a href="<?= $baseUrl ?>/admin/users.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/users', $currentUri); ?>">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1" />
           <circle cx="9" cy="7" r="4" />
@@ -117,43 +117,7 @@ function active($page, $current)
         <span>Data User</span>
       </a>
 
-      <a href="../admin/laporan.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('laporan.php', $current); ?>">
-        <!-- Heroicon: Document -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M7 21h10a2 2 0 002-2V9l-6-6H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-        <span>Laporan</span>
-      </a>
     <?php endif; ?>
-
-    <!-- ================= KEPALA BAGIAN ================= -->
-    <?php if ($role === 'kepala_bagian'): ?>
-      <a href="../kepala_bagian/persetujuan.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('persetujuan.php', $current); ?>">
-        <!-- Heroicon: Check -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M5 13l4 4L19 7" />
-        </svg>
-        <span>Persetujuan</span>
-      </a>
-
-      <a href="../kepala_bagian/laporan.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('laporan.php', $current); ?>">
-        <!-- Heroicon: Chart -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M11 3v18M6 12h12" />
-        </svg>
-        <span>Laporan</span>
-      </a>
-    <?php endif; ?>
-
   </nav>
 
   <!-- FOOTER -->
@@ -168,7 +132,7 @@ function active($page, $current)
       </div>
     </div>
 
-    <a href="../logout.php"
+    <a href="<?= $baseUrl ?>/logout.php"
       class="block text-center bg-red-600 hover:bg-red-700 transition text-white py-2.5 rounded-xl font-semibold">
       Logout
     </a>
