@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../../config/koneksi.php';
+include '../../includes/notification-helper.php';
 
 /* =====================
    AUTH ADMIN
@@ -19,7 +20,9 @@ if (!isset($_GET['id'])) {
 }
 
 $id = (int) $_GET['id'];
-$data = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT * FROM fasilitas WHERE id=$id"));
+$data = mysqli_fetch_assoc(
+  mysqli_query($koneksi, "SELECT * FROM fasilitas WHERE id=$id")
+);
 
 if (!$data) {
   header("Location: index.php");
@@ -33,11 +36,29 @@ $error = '';
 ===================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $nama = trim($_POST['nama']);
+  $nama_lama = $data['nama'];
 
   if ($nama === '') {
     $error = 'Nama fasilitas wajib diisi.';
   } else {
-    mysqli_query($koneksi, "UPDATE fasilitas SET nama='$nama' WHERE id=$id");
+
+    // update fasilitas
+    mysqli_query($koneksi, "
+      UPDATE fasilitas
+      SET nama='$nama'
+      WHERE id=$id
+    ");
+
+    /* =====================
+       KIRIM NOTIFIKASI
+    ===================== */
+    kirimNotifikasiByRole(
+      $koneksi,
+      ['admin', 'kepala_bagian'],
+      'Fasilitas Diperbarui',
+      "Fasilitas \"$nama_lama\" telah diperbarui menjadi \"$nama\" oleh admin."
+    );
+
     header("Location: index.php?success=edit");
     exit;
   }

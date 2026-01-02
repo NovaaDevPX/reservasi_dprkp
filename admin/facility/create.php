@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../../config/koneksi.php';
+include '../../includes/notification-helper.php';
 
 /* =====================
    AUTH ADMIN
@@ -26,7 +27,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (mysqli_num_rows($cek) > 0) {
       $error = 'Fasilitas sudah ada.';
     } else {
-      mysqli_query($koneksi, "INSERT INTO fasilitas (nama) VALUES ('$nama')");
+
+      // insert fasilitas
+      mysqli_query($koneksi, "
+        INSERT INTO fasilitas (nama)
+        VALUES ('$nama')
+      ");
+
+      /* =====================
+         KIRIM NOTIFIKASI
+      ===================== */
+      kirimNotifikasiByRole(
+        $koneksi,
+        ['admin', 'kepala_bagian'],
+        'Fasilitas Baru Ditambahkan',
+        "Fasilitas baru \"$nama\" telah ditambahkan oleh admin."
+      );
+
       header("Location: index.php?success=add");
       exit;
     }

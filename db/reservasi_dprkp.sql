@@ -40,7 +40,7 @@ CREATE TABLE fasilitas (
 );
 
 -- =========================================
--- RUANGAN FASILITAS (DENGAN QTY)
+-- RUANGAN FASILITAS
 -- =========================================
 CREATE TABLE ruangan_fasilitas (
   ruangan_id INT UNSIGNED NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE reservasi (
 );
 
 -- =========================================
--- RESERVASI FASILITAS (DENGAN QTY)
+-- RESERVASI FASILITAS
 -- =========================================
 CREATE TABLE reservasi_fasilitas (
   reservasi_id INT UNSIGNED NOT NULL,
@@ -99,6 +99,21 @@ CREATE TABLE jadwal_blokir (
   jam_selesai TIME,
   keterangan TEXT,
   FOREIGN KEY (ruangan_id) REFERENCES ruangan(id)
+);
+
+-- =========================================
+-- NOTIFIKASI (MULTI USER / MULTI ROLE)
+-- =========================================
+CREATE TABLE notifikasi (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  reservasi_id INT UNSIGNED NULL,
+  judul VARCHAR(150) NOT NULL,
+  pesan TEXT NOT NULL,
+  is_read TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (reservasi_id) REFERENCES reservasi(id) ON DELETE CASCADE
 );
 
 -- =========================================
@@ -138,22 +153,11 @@ INSERT INTO fasilitas (nama) VALUES
 -- RUANGAN FASILITAS + QTY (REALISTIS)
 -- =========================================
 INSERT INTO ruangan_fasilitas VALUES
--- Ruang Rapat A
 (1,1,1),(1,2,2),(1,5,1),(1,6,2),
-
--- Ruang Rapat B
 (2,1,1),(2,2,2),(2,3,1),(2,5,1),(2,6,4),
-
--- Aula Utama
 (3,1,2),(3,2,6),(3,3,1),(3,6,10),
-
--- Diskusi 1
 (4,2,1),(4,5,1),
-
--- Diskusi 2
 (5,2,1),(5,5,1),
-
--- Training
 (6,1,1),(6,2,2),(6,3,1),(6,6,4);
 
 -- =========================================
@@ -172,20 +176,9 @@ INSERT INTO reservasi
 -- RESERVASI FASILITAS + QTY
 -- =========================================
 INSERT INTO reservasi_fasilitas VALUES
--- Rapat koordinasi
 (1,1,1),(1,5,1),(1,6,2),
-
--- Presentasi
 (2,1,1),(2,3,1),(2,6,3),
-
--- Diskusi teknis
 (3,5,1),
-
--- Evaluasi tim
 (4,5,1),
-
--- Rapat tahunan (Aula)
 (5,1,2),(5,3,1),(5,6,8),
-
--- Seminar nasional
 (6,1,2),(6,3,1),(6,6,10);
