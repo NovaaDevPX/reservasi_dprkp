@@ -36,7 +36,7 @@ if (isset($_POST['login'])) {
           header('Location: pegawai/dashboard.php');
           break;
         case 'kepala_bagian':
-          header('Location: kepala_bagian/dashboard.php');
+          header('Location: kepala-bagian/dashboard.php');
           break;
       }
       exit();
