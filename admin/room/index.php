@@ -16,13 +16,18 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 $query = mysqli_query($koneksi, "
   SELECT 
     r.*,
-    GROUP_CONCAT(f.nama SEPARATOR ', ') AS fasilitas
+    GROUP_CONCAT(
+      CONCAT(f.nama, ' (', rf.qty, ')')
+      ORDER BY f.nama ASC
+      SEPARATOR ', '
+    ) AS fasilitas
   FROM ruangan r
   LEFT JOIN ruangan_fasilitas rf ON r.id = rf.ruangan_id
   LEFT JOIN fasilitas f ON rf.fasilitas_id = f.id
   GROUP BY r.id
   ORDER BY r.created_at DESC
 ");
+
 
 if (!$query) {
   die("Query error: " . mysqli_error($koneksi));
