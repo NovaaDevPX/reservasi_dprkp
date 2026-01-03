@@ -90,6 +90,7 @@ $statusClass = match ($data['status']) {
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
 
   <?php include '../../includes/layouts/sidebar.php'; ?>
+  <?php include '../../includes/layouts/notification.php'; ?>
 
   <div class="main-content p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
 
@@ -193,6 +194,19 @@ $statusClass = match ($data['status']) {
           </div>
         </div>
       <?php endif; ?>
+
+      <div class="flex gap-4 justify-end">
+        <?php if ($data['status'] === 'Menunggu Admin'): ?>
+          <a href="approve.php?id=<?= $data['id']; ?>"
+            class="block border border-emerald-600 rounded-xl text-left px-4 py-2 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all duration-300 ease-in-out">
+            Setujui
+          </a>
+          <a href="reject.php?id=<?= $data['id']; ?>"
+            class="block text-left rounded-xl bg-red-600 border border-red-600 px-4 py-2 text-white rounded-b-xl hover:bg-white hover:text-red-600 hover:border-red-600 transition-all duration-300 ease-in-out">
+            Tolak
+          </a>
+        <?php endif; ?>
+      </div>
 
     </div>
   </div>

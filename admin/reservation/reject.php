@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       WHERE id = $id
     ");
 
-    header("Location: index.php?success=reject");
+    header("Location: detail.php?id=$id&success=reject");
     exit;
   }
 }
