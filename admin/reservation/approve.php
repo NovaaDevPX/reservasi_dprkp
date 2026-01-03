@@ -19,5 +19,5 @@ mysqli_query($koneksi, "
   WHERE id = $id AND status = 'Menunggu Admin'
 ");
 
-header("Location: index.php");
+header("Location: index.php?success=approve");
 exit;

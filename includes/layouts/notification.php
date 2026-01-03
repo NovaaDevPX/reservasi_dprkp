@@ -30,6 +30,10 @@ if (isset($_GET['success'])) {
       $title = 'Berhasil';
       $message = 'Data berhasil dihapus.';
       break;
+    case 'approve':
+      $title = 'Berhasil';
+      $message = 'Data berhasil disetujui.';
+      break;
     case 'reject':
       $title = 'Berhasil';
       $message = 'Data berhasil ditolak.';
