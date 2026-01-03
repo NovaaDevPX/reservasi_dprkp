@@ -70,6 +70,7 @@ function badgeStatus($status)
   <meta charset="UTF-8">
   <title>Dashboard Pegawai</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
@@ -79,9 +80,11 @@ function badgeStatus($status)
   <div class="main-content p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
 
     <!-- HEADER -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-slate-800 mb-1">Dashboard Pegawai</h1>
-      <p class="text-slate-600">Pantau reservasi ruangan dan notifikasi Anda.</p>
+    <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow mb-6">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Admin
+      </h1>
+      <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
     </div>
 
     <!-- STAT CARD -->
