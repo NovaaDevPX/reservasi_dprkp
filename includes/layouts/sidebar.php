@@ -129,8 +129,8 @@ function active($path, $currentUri)
     <!-- ================= KEPALA BAGIAN ================= -->
     <?php if ($role === 'kepala_bagian'): ?>
 
-      <a href="<?= $baseUrl ?>/kepala-bagian/approve/index.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/kepala-bagian/approve', $currentUri); ?>">
+      <a href="<?= $baseUrl ?>/kepala-bagian/final-approve/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/kepala-bagian/final-approve', $currentUri); ?>">
 
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
