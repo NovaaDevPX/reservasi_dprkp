@@ -123,12 +123,20 @@ CREATE TABLE notifikasi (
 -- DATA USERS
 -- =========================================
 INSERT INTO users (nip,nama,password,role) VALUES
-('pegawai123','Budi Santoso','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
-('pegawai124','Andi Saputra','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
-('pegawai125','Rina Putri','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
-('pegawai126','Doni Pratama','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
-('admin456','Siti Rahmawati','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','admin'),
-('kabag789','Hadi Prasetyo','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','kepala_bagian');
+('pegawai001','Budi Santoso','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai002','Andi Saputra','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai003','Rina Putri','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai004','Doni Pratama','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai005','Ahmad Fauzi','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai006','Dewi Lestari','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai007','Rizky Maulana','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai008','Sri Wahyuni','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai009','Agus Salim','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+('pegawai010','Lina Marlina','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','pegawai'),
+
+('admin001','Siti Rahmawati','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','admin'),
+('kabag001','Hadi Prasetyo','$2y$10$KujV8ygg8qD1idhl7sCVGuQtvFL5BRAVqfRK9b9bmzJu6uxL2Rtd6','kepala_bagian');
+
 
 -- =========================================
 -- DATA RUANGAN
@@ -167,21 +175,44 @@ INSERT INTO ruangan_fasilitas VALUES
 -- DUMMY RESERVASI (JAN–FEB 2026)
 -- =========================================
 INSERT INTO reservasi
-(user_id,ruangan_id,tanggal,jam_mulai,jam_selesai,keperluan,jumlah_peserta,status) VALUES
-(1,1,'2026-01-06','08:30','10:00','Rapat koordinasi mingguan',12,'Disetujui'),
-(2,2,'2026-01-06','09:00','11:00','Presentasi rencana kerja',25,'Disetujui'),
-(3,4,'2026-01-06','13:00','14:30','Diskusi teknis aplikasi',8,'Menunggu Admin'),
-(4,5,'2026-01-06','15:00','16:30','Evaluasi kinerja tim',10,'Disetujui'),
-(1,3,'2026-01-20','08:00','17:00','Rapat kerja tahunan',200,'Disetujui'),
-(6,3,'2026-02-05','08:00','17:00','Seminar nasional',190,'Disetujui');
+(user_id,ruangan_id,tanggal,jam_mulai,jam_selesai,keperluan,jumlah_peserta,status,kabag_id)
+SELECT
+  FLOOR(1 + RAND() * 9) AS user_id,
+  FLOOR(1 + RAND() * 6) AS ruangan_id,
+  DATE_ADD('2026-01-01', INTERVAL FLOOR(RAND() * 60) DAY),
+  '08:00',
+  '10:00',
+  'Rapat koordinasi kegiatan rutin',
+  FLOOR(5 + RAND() * 45),
+  ELT(FLOOR(1 + RAND() * 5),
+    'Menunggu Admin',
+    'Menunggu Kepala Bagian',
+    'Disetujui',
+    'Ditolak',
+    'Dibatalkan'
+  ),
+  12
+FROM information_schema.columns
+LIMIT 120;
 
 -- =========================================
 -- RESERVASI FASILITAS + QTY
 -- =========================================
-INSERT INTO reservasi_fasilitas VALUES
-(1,1,1),(1,5,1),(1,6,2),
-(2,1,1),(2,3,1),(2,6,3),
-(3,5,1),
-(4,5,1),
-(5,1,2),(5,3,1),(5,6,8),
-(6,1,2),(6,3,1),(6,6,10);
+INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
+SELECT
+    r.id AS reservasi_id,
+    rf.fasilitas_id,
+    CASE
+        WHEN rf.fasilitas_id = 6 THEN LEAST(rf.qty, r.jumlah_peserta)
+        ELSE rf.qty
+    END AS qty
+FROM reservasi r
+JOIN ruangan_fasilitas rf 
+    ON rf.ruangan_id = r.ruangan_id
+WHERE r.status <> 'Ditolak';
+
+
+INSERT INTO jadwal_blokir VALUES
+(NULL,1,'2026-02-10','08:00','12:00','Maintenance AC'),
+(NULL,3,'2026-03-05','08:00','17:00','Persiapan acara besar'),
+(NULL,6,'2026-04-01','08:00','12:00','Instalasi perangkat');

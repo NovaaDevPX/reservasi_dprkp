@@ -1,76 +1,158 @@
 <?php
-// ================================
-// KONEKSI DATABASE
-// ================================
 session_start();
 include '../config/koneksi.php';
 
-// ================================
-// DATA RUANGAN (FILTER)
-// ================================
-$ruangan_q = mysqli_query($koneksi, "SELECT id, nama_ruangan FROM ruangan ORDER BY nama_ruangan ASC");
-$ruangan_list = [];
-while ($r = mysqli_fetch_assoc($ruangan_q)) {
-  $ruangan_list[] = $r;
+/* =====================
+   AUTH
+===================== */
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kepala_bagian') {
+  header("Location: ../index.php");
+  exit;
 }
 
-// ================================
-// DATA RESERVASI
-// ================================
-$query = "
-  SELECT 
-    r.id,
-    r.tanggal,
-    r.jam_mulai,
-    r.jam_selesai,
-    r.status,
-    r.keperluan,
-    r.ruangan_id,
-    ru.nama_ruangan
-  FROM reservasi r
-  JOIN ruangan ru ON r.ruangan_id = ru.id
-  WHERE r.status != 'Ditolak'
-";
+/* =====================
+   FILTER
+===================== */
+$tahun = $_GET['tahun'] ?? date('Y');
+$bulan = $_GET['bulan'] ?? '';
 
-$result = mysqli_query($koneksi, $query);
+$whereTanggal = "YEAR(r.tanggal) = '$tahun'";
+if ($bulan !== '') {
+  $whereTanggal .= " AND MONTH(r.tanggal) = '$bulan'";
+}
 
-$events = [];
-while ($row = mysqli_fetch_assoc($result)) {
+/* =====================
+   CHART 1 - TREN
+===================== */
+$labels = [];
+$data = [];
+$detailRuangan = [];
 
-  switch ($row['status']) {
-    case 'Disetujui':
-      $color = '#16a34a';
-      break;
-    case 'Menunggu Admin':
-      $color = '#f59e0b';
-      break;
-    case 'Menunggu Kepala Bagian':
-      $color = '#0ea5e9';
-      break;
-    case 'Dibatalkan':
-      $color = '#6b7280';
-      break;
-    default:
-      $color = '#64748b';
+if ($bulan == '') {
+  $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  $values = array_fill(1, 12, 0);
+  $detailRuangan = array_fill(1, 12, []);
+
+  $q = mysqli_query($koneksi, "
+    SELECT 
+      MONTH(r.tanggal) bln,
+      ru.nama_ruangan,
+      COUNT(*) total
+    FROM reservasi r
+    JOIN ruangan ru ON ru.id = r.ruangan_id
+    WHERE $whereTanggal
+      AND r.status <> 'Ditolak'
+    GROUP BY bln, ru.id
+  ");
+
+  while ($row = mysqli_fetch_assoc($q)) {
+    $b = (int)$row['bln'];
+    $values[$b] += $row['total'];
+    $detailRuangan[$b][] = $row['nama_ruangan'] . ' (' . $row['total'] . ')';
   }
 
-  $events[] = [
-    'id'    => $row['id'],
-    'title' => $row['nama_ruangan'],
-    'start' => $row['tanggal'] . 'T' . $row['jam_mulai'],
-    'end'   => $row['tanggal'] . 'T' . $row['jam_selesai'],
-    'backgroundColor' => $color,
-    'borderColor' => $color,
-    'extendedProps' => [
-      'ruangan' => $row['nama_ruangan'],
-      'ruangan_id' => $row['ruangan_id'],
-      'keperluan' => $row['keperluan'],
-      'status' => $row['status'],
-      'jam_mulai' => $row['jam_mulai'],
-      'jam_selesai' => $row['jam_selesai']
-    ]
-  ];
+  $data = array_values($values);
+  $detailRuangan = array_values($detailRuangan);
+} else {
+  $days = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
+  $values = [];
+  $detailRuangan = [];
+
+  for ($i = 1; $i <= $days; $i++) {
+    $labels[] = $i;
+    $values[$i] = 0;
+    $detailRuangan[$i] = [];
+  }
+
+  $q = mysqli_query($koneksi, "
+    SELECT 
+      DAY(r.tanggal) tgl,
+      ru.nama_ruangan,
+      COUNT(*) total
+    FROM reservasi r
+    JOIN ruangan ru ON ru.id = r.ruangan_id
+    WHERE $whereTanggal
+      AND r.status <> 'Ditolak'
+    GROUP BY tgl, ru.id
+  ");
+
+  while ($row = mysqli_fetch_assoc($q)) {
+    $d = (int)$row['tgl'];
+    $values[$d] += $row['total'];
+    $detailRuangan[$d][] = $row['nama_ruangan'] . ' (' . $row['total'] . ')';
+  }
+
+  $data = array_values($values);
+  $detailRuangan = array_values($detailRuangan);
 }
+
+/* =====================
+   CHART 2 - RUANGAN TERFAVORIT
+===================== */
+$ruanganLabel = [];
+$ruanganData = [];
+
+$q = mysqli_query($koneksi, "
+  SELECT ru.nama_ruangan, COUNT(*) total
+  FROM reservasi r
+  JOIN ruangan ru ON ru.id = r.ruangan_id
+  WHERE $whereTanggal
+    AND r.status <> 'Ditolak'
+  GROUP BY ru.id
+  ORDER BY total DESC
+");
+
+while ($r = mysqli_fetch_assoc($q)) {
+  $ruanganLabel[] = $r['nama_ruangan'];
+  $ruanganData[] = $r['total'];
+}
+
+/* =====================
+   CHART 3 - STATUS
+===================== */
+$statusLabel = [];
+$statusData = [];
+
+$q = mysqli_query($koneksi, "
+  SELECT r.status, COUNT(*) total
+  FROM reservasi r
+  WHERE $whereTanggal
+  GROUP BY r.status
+");
+
+while ($r = mysqli_fetch_assoc($q)) {
+  $statusLabel[] = $r['status'];
+  $statusData[] = $r['total'];
+}
+
+/* =====================
+   CHART 4 - FASILITAS
+===================== */
+$fasilitasLabel = [];
+$fasilitasData = [];
+
+$q = mysqli_query($koneksi, "
+  SELECT f.nama, SUM(rf.qty) total
+  FROM reservasi r
+  JOIN reservasi_fasilitas rf ON rf.reservasi_id = r.id
+  JOIN fasilitas f ON f.id = rf.fasilitas_id
+  WHERE $whereTanggal
+    AND r.status <> 'Ditolak'
+  GROUP BY f.id
+  ORDER BY total DESC
+");
+
+while ($r = mysqli_fetch_assoc($q)) {
+  $fasilitasLabel[] = $r['nama'];
+  $fasilitasData[] = $r['total'];
+}
+
+/* =====================
+   JUDUL
+===================== */
+$judulTrend = $bulan
+  ? "Tren Reservasi per Tanggal – " . date('F', mktime(0, 0, 0, $bulan, 1)) . " $tahun"
+  : "Tren Reservasi per Bulan – Tahun $tahun";
 ?>
 
 <!DOCTYPE html>
@@ -78,296 +160,314 @@ while ($row = mysqli_fetch_assoc($result)) {
 
 <head>
   <meta charset="UTF-8">
-  <title>Kalender Reservasi</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Kepala Bagian</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    :root {
-      --bg: #f8fafc;
-      --card: rgba(255, 255, 255, .82);
-      --border: rgba(226, 232, 240, .8);
-      --text: #0f172a;
-      --muted: #64748b;
-      --primary: #2563eb;
-      --primary-soft: #dbeafe;
-      --glass: blur(16px);
+    .chart-container {
+      transition: transform 0.2s ease-in-out;
     }
 
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(14px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .chart-container:hover {
+      transform: scale(1.02);
     }
 
-    .filter-bar {
-      display: flex;
-      gap: 14px;
-      margin-bottom: 22px;
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
-    .filter-bar select {
-      padding: 10px 16px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      backdrop-filter: var(--glass);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      transition: .25s;
-    }
-
-    .filter-bar select:hover {
-      border-color: var(--primary);
-    }
-
-    .fc {
-      background: var(--card);
-      backdrop-filter: var(--glass);
-      border-radius: 20px;
-      padding: 18px;
-      border: 1px solid var(--border);
-      animation: fadeUp .35s ease;
-    }
-
-    .fc-toolbar {
-      margin-bottom: 18px !important;
-    }
-
-    .fc-toolbar-title {
-      font-size: 20px !important;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .fc-button {
-      border: 1px solid var(--border) !important;
-      background: #fff !important;
-      color: var(--text) !important;
-      padding: 7px 14px !important;
-      font-weight: 600;
-      text-transform: capitalize !important;
-      border-radius: 12px !important;
-      transition: .2s;
-    }
-
-    .fc-button:hover {
-      background: var(--primary-soft) !important;
-      color: var(--primary) !important;
-    }
-
-    .fc-button-active {
-      background: var(--primary) !important;
-      color: #fff !important;
-      border-color: var(--primary) !important;
-    }
-
-    .fc-theme-standard td,
-    .fc-theme-standard th {
-      border-color: var(--border);
-    }
-
-    .fc-col-header-cell {
-      padding: 10px 0;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-    }
-
-    .fc-day-today {
-      background: rgba(37, 99, 235, .06) !important;
-    }
-
-    .fc-daygrid-day-number {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-    }
-
-    .fc-event {
-      border-radius: 999px !important;
-      padding: 5px 12px !important;
-      font-size: 11.5px !important;
-      font-weight: 600;
-      border: none !important;
-      color: #fff !important;
-      box-shadow: 0 6px 18px rgba(37, 99, 235, .35);
-      transition: transform .15s ease, box-shadow .15s ease;
-    }
-
-    .fc-event:hover {
-      transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 16px 36px rgba(37, 99, 235, .45);
-    }
-
-    .fc-tooltip {
-      position: fixed;
-      z-index: 99999;
-      background: linear-gradient(135deg, #020617, #0f172a);
-      color: #fff;
-      padding: 14px 16px;
-      border-radius: 14px;
-      font-size: 12px;
-      line-height: 1.6;
-      box-shadow: 0 30px 60px rgba(0, 0, 0, .45);
-      pointer-events: none;
-      max-width: 260px;
-      animation: pop .15s ease;
-    }
-
-    @keyframes pop {
-      from {
-        transform: scale(.95);
-        opacity: 0;
-      }
-
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-
-    .fc-tooltip strong {
-      color: #38bdf8;
-      font-size: 13px;
-    }
-
-    .fc-event {
-      cursor: pointer;
+    .card-shadow {
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
   </style>
-
 </head>
 
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen">
 
-  <?php include '../includes/layouts/sidebar.php'; ?>
+  <!-- SIDEBAR -->
+  <div class="fixed w-64 h-screen bg-white shadow-lg z-10">
+    <?php include '../includes/layouts/sidebar.php'; ?>
+  </div>
 
-  <div class="main-content p-4 sm:p-6 lg:p-8">
-    <div class="card">
-      <!-- HEADER -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 class="text-3xl font-bold text-slate-800 mb-2">Dashboard</h1>
-          <p class="text-slate-600 text-base">
-            Pantau dan kelola seluruh data reservasi ruangan dan aula secara terpusat dan efisien.
-          </p>
-        </div>
-      </div>
+  <!-- CONTENT -->
+  <div class="ml-64 p-8 space-y-8">
 
-      <!-- FILTER -->
-      <div class="filter-bar">
-        <select id="filterRuangan">
-          <option value="all">Semua Ruangan</option>
-          <?php foreach ($ruangan_list as $r): ?>
-            <option value="<?= $r['id'] ?>">
-              <?= htmlspecialchars($r['nama_ruangan']) ?>
-            </option>
-          <?php endforeach; ?>
+    <!-- HEADER -->
+    <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Kepala Bagian
+      </h1>
+      <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
+    </div>
+
+    <!-- FILTER FORM -->
+    <form method="GET" class="bg-white p-6 rounded-2xl shadow-lg card-shadow flex flex-wrap gap-4 items-center w-fit">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-calendar-alt text-gray-600"></i>
+        <label class="font-medium text-gray-700">Tahun:</label>
+        <select name="tahun" class="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <?php for ($t = date('Y') - 2; $t <= date('Y') + 1; $t++): ?>
+            <option value="<?= $t ?>" <?= $tahun == $t ? 'selected' : '' ?>><?= $t ?></option>
+          <?php endfor; ?>
         </select>
       </div>
 
-      <div class="max-w-5xl mx-auto">
-        <div id="calendar"></div>
+      <div class="flex items-center gap-2">
+        <i class="fas fa-calendar-day text-gray-600"></i>
+        <label class="font-medium text-gray-700">Bulan:</label>
+        <select name="bulan" class="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <option value="">Semua Bulan</option>
+          <?php for ($b = 1; $b <= 12; $b++):
+            $val = str_pad($b, 2, '0', STR_PAD_LEFT); ?>
+            <option value="<?= $val ?>" <?= $bulan == $val ? 'selected' : '' ?>>
+              <?= date('F', mktime(0, 0, 0, $b, 1)) ?>
+            </option>
+          <?php endfor; ?>
+        </select>
+      </div>
+
+      <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition duration-300 shadow-md">
+        <i class="fas fa-search mr-2"></i>Terapkan
+      </button>
+    </form>
+
+    <!-- CHARTS GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <!-- CHART 1 - TREND -->
+      <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow col-span-2 chart-container">
+        <canvas id="trend" class="w-full h-80"></canvas>
+      </div>
+
+      <!-- CHART 2 - RUANGAN -->
+      <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow chart-container">
+        <canvas id="ruangan" class="w-full h-64"></canvas>
+      </div>
+
+      <!-- CHART 3 - STATUS -->
+      <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow chart-container">
+        <canvas id="status" class="w-full h-64"></canvas>
+      </div>
+
+      <!-- CHART 4 - FASILITAS -->
+      <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow col-span-2 chart-container">
+        <canvas id="fasilitas" class="w-full h-80"></canvas>
       </div>
 
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const calendarEl = document.getElementById('calendar');
-      const filterRuangan = document.getElementById('filterRuangan');
-      let tooltip;
+    const detailRuangan = <?= json_encode($detailRuangan) ?>;
 
-      const allEvents = <?php echo json_encode($events); ?>;
-
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        eventDisplay: 'dot',
-        locale: 'id',
-        height: 'auto',
-        dayMaxEvents: 3,
-
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    // CHART 1 - TREND
+    new Chart(document.getElementById('trend'), {
+      type: 'line',
+      data: {
+        labels: <?= json_encode($labels) ?>,
+        datasets: [{
+          label: 'Jumlah Reservasi',
+          data: <?= json_encode($data) ?>,
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          pointBackgroundColor: '#3B82F6',
+          pointBorderColor: '#FFFFFF',
+          pointBorderWidth: 2,
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          title: {
+            display: true,
+            text: "<?= $judulTrend ?>",
+            font: {
+              size: 18,
+              weight: 'bold'
+            },
+            color: '#374151'
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#FFFFFF',
+            bodyColor: '#FFFFFF',
+            callbacks: {
+              afterBody: ctx => {
+                const d = detailRuangan[ctx[0].dataIndex];
+                return d && d.length ? ['Ruangan:', ...d.map(r => '• ' + r)] : '';
+              }
+            }
+          }
         },
-
-        events: allEvents,
-
-        eventClick: function(info) {
-          const id = info.event.id;
-          window.location.href = `reservation/detail.php?id=${id}`;
-        },
-
-        eventDidMount: function(info) {
-          const p = info.event.extendedProps;
-
-          info.el.addEventListener('mouseenter', () => {
-            tooltip = document.createElement('div');
-            tooltip.className = 'fc-tooltip';
-            tooltip.innerHTML = `
-          <strong>${p.ruangan}</strong><br>
-          ${p.keperluan}<br><br>
-          🕒 ${p.jam_mulai} - ${p.jam_selesai}<br>
-          📌 Status: ${p.status}
-        `;
-            document.body.appendChild(tooltip);
-          });
-
-          info.el.addEventListener('mousemove', (e) => {
-            if (!tooltip) return;
-
-            let x = e.clientX + 14;
-            let y = e.clientY + 14;
-            const rect = tooltip.getBoundingClientRect();
-
-            if (x + rect.width > window.innerWidth) {
-              x = window.innerWidth - rect.width - 12;
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
             }
-            if (y + rect.height > window.innerHeight) {
-              y = window.innerHeight - rect.height - 12;
+          },
+          x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
             }
-
-            tooltip.style.left = x + 'px';
-            tooltip.style.top = y + 'px';
-          });
-
-          info.el.addEventListener('mouseleave', () => {
-            if (tooltip) {
-              tooltip.remove();
-              tooltip = null;
-            }
-          });
+          }
         }
-      });
+      }
+    });
 
-      calendar.render();
+    // CHART 2 - RUANGAN
+    new Chart(document.getElementById('ruangan'), {
+      type: 'bar',
+      data: {
+        labels: <?= json_encode($ruanganLabel) ?>,
+        datasets: [{
+          label: 'Jumlah Penggunaan',
+          data: <?= json_encode($ruanganData) ?>,
+          backgroundColor: 'rgba(34, 197, 94, 0.8)',
+          borderColor: '#22C55E',
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Ruangan Paling Sering Digunakan',
+            font: {
+              size: 16,
+              weight: 'bold'
+            },
+            color: '#374151'
+          },
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          }
+        }
+      }
+    });
 
-      // FILTER RUANGAN
-      filterRuangan.addEventListener('change', function() {
-        const value = this.value;
+    // CHART 3 - STATUS
+    new Chart(document.getElementById('status'), {
+      type: 'pie',
+      data: {
+        labels: <?= json_encode($statusLabel) ?>,
+        datasets: [{
+          data: <?= json_encode($statusData) ?>,
+          backgroundColor: [
+            'rgba(234, 179, 8, 0.8)', // Menunggu Admin (Yellow)
+            'rgba(249, 115, 22, 0.8)', // Menunggu Kepala Bagian (Orange)
+            'rgba(34, 197, 94, 0.8)', // Disetujui (Green)
+            'rgba(239, 68, 68, 0.8)', // Ditolak (Red)
+            'rgba(107, 114, 128, 0.8)' // Dibatalkan (Gray)
+          ],
+          borderColor: [
+            '#EAB308',
+            '#F97316',
+            '#22C55E',
+            '#EF4444',
+            '#6B7280'
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Status Reservasi',
+            font: {
+              size: 16,
+              weight: 'bold'
+            },
+            color: '#374151'
+          },
+          legend: {
+            position: 'bottom',
+            labels: {
+              usePointStyle: true,
+              padding: 20
+            }
+          }
+        }
+      }
+    });
 
-        calendar.removeAllEvents();
 
-        const filtered = value === 'all' ?
-          allEvents :
-          allEvents.filter(e => e.extendedProps.ruangan_id == value);
-
-        calendar.addEventSource(filtered);
-      });
+    // CHART 4 - FASILITAS
+    new Chart(document.getElementById('fasilitas'), {
+      type: 'bar',
+      data: {
+        labels: <?= json_encode($fasilitasLabel) ?>,
+        datasets: [{
+          label: 'Jumlah Penggunaan',
+          data: <?= json_encode($fasilitasData) ?>,
+          backgroundColor: 'rgba(168, 85, 247, 0.8)',
+          borderColor: '#A855F7',
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Fasilitas Paling Sering Digunakan',
+            font: {
+              size: 16,
+              weight: 'bold'
+            },
+            color: '#374151'
+          },
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          }
+        }
+      }
     });
   </script>
 
