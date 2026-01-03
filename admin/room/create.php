@@ -8,39 +8,48 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   exit;
 }
 
+/* ======================
+   AMBIL DATA FASILITAS
+====================== */
 $fasilitas = mysqli_query($koneksi, "SELECT * FROM fasilitas ORDER BY nama ASC");
 
+/* ======================
+   PROSES SIMPAN
+====================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $nama      = trim($_POST['nama_ruangan']);
   $kapasitas = (int) $_POST['kapasitas'];
   $status    = $_POST['status'];
-  $dipilih   = $_POST['fasilitas'] ?? [];
+  $fasilitasDipilih = $_POST['fasilitas'] ?? [];
 
   mysqli_begin_transaction($koneksi);
 
   try {
 
-    // insert ruangan
+    // INSERT RUANGAN
     mysqli_query($koneksi, "
       INSERT INTO ruangan (nama_ruangan, kapasitas, status)
       VALUES ('$nama', $kapasitas, '$status')
     ");
 
-    $rid = mysqli_insert_id($koneksi);
+    $ruangan_id = mysqli_insert_id($koneksi);
 
-    // insert fasilitas ruangan
-    foreach ($dipilih as $fid) {
+    // INSERT FASILITAS + QTY
+    foreach ($fasilitasDipilih as $fasilitas_id => $qty) {
+      $qty = (int)$qty;
+      if ($qty < 1) continue;
+
       mysqli_query($koneksi, "
-        INSERT INTO ruangan_fasilitas (ruangan_id, fasilitas_id)
-        VALUES ($rid, $fid)
+        INSERT INTO ruangan_fasilitas (ruangan_id, fasilitas_id, qty)
+        VALUES ($ruangan_id, $fasilitas_id, $qty)
       ");
     }
 
     mysqli_commit($koneksi);
 
     /* =====================
-       KIRIM NOTIFIKASI
+       NOTIFIKASI
     ===================== */
     kirimNotifikasiByRole(
       $koneksi,
@@ -53,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
   } catch (Exception $e) {
     mysqli_rollback($koneksi);
-    die("Gagal menyimpan data");
+    die("Gagal menyimpan data ruangan");
   }
 }
 ?>
@@ -71,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <?php include '../../includes/layouts/sidebar.php'; ?>
 
   <div class="main-content p-4 sm:p-6 lg:p-8">
-    <!-- HEADER -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
       <div>
         <h1 class="text-3xl font-bold text-slate-800 mb-2">Tambah Data Ruangan</h1>
@@ -92,55 +100,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <form method="POST" class="bg-white p-6 rounded-2xl shadow space-y-6">
 
-      <input name="nama_ruangan" required placeholder="Nama Ruangan"
+      <!-- NAMA -->
+      <input
+        name="nama_ruangan"
+        required
+        placeholder="Nama Ruangan"
         class="w-full px-4 py-2 border rounded-xl">
 
-      <input type="number" name="kapasitas" required placeholder="Kapasitas"
+      <!-- KAPASITAS -->
+      <input
+        type="number"
+        name="kapasitas"
+        min="1"
+        required
+        placeholder="Kapasitas"
         class="w-full px-4 py-2 border rounded-xl">
 
+      <!-- STATUS -->
       <select name="status" class="w-full px-4 py-2 border rounded-xl">
-        <option>Aktif</option>
-        <option>Nonaktif</option>
-        <option>Perawatan</option>
+        <option value="Aktif">Aktif</option>
+        <option value="Nonaktif">Nonaktif</option>
+        <option value="Perawatan">Perawatan</option>
       </select>
 
-      <!-- MULTI SELECT FASILITAS -->
+      <!-- FASILITAS -->
       <div>
-        <label class="font-semibold block mb-2">Fasilitas Default</label>
+        <label class="font-semibold block mb-2">
+          Fasilitas Ruangan
+        </label>
 
-        <!-- SELECTED TAGS -->
+        <!-- TAG TERPILIH -->
         <div id="selected" class="flex flex-wrap gap-2 mb-2"></div>
 
-        <!-- SEARCH DROPDOWN -->
+        <!-- SEARCH -->
         <div class="relative">
-          <input type="text"
+          <input
+            type="text"
             id="search"
-            placeholder="Cari & pilih fasilitas..."
-            autocomplete="off"
+            placeholder="Cari fasilitas..."
             onfocus="openDropdown()"
             onkeyup="filterFacility()"
+            autocomplete="off"
             class="w-full px-4 py-2 border rounded-xl">
 
-          <div id="dropdown"
+          <div
+            id="dropdown"
             class="absolute z-20 mt-1 w-full bg-white border rounded-xl shadow max-h-48 overflow-y-auto hidden">
 
             <?php while ($f = mysqli_fetch_assoc($fasilitas)): ?>
               <div
+                class="facility-item px-4 py-2 hover:bg-slate-100 cursor-pointer"
                 data-id="<?= $f['id']; ?>"
                 data-name="<?= htmlspecialchars($f['nama']); ?>"
-                onclick="selectFacility(this)"
-                class="facility-item px-4 py-2 hover:bg-slate-100 cursor-pointer">
+                onclick="selectFacility(this)">
                 <?= htmlspecialchars($f['nama']); ?>
               </div>
             <?php endwhile; ?>
+
           </div>
         </div>
-
-        <div id="hiddenInputs"></div>
       </div>
 
       <button class="px-6 py-2 bg-blue-600 text-white rounded-xl font-semibold">
-        Simpan
+        Simpan Ruangan
       </button>
 
     </form>
@@ -151,7 +173,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const selectedBox = document.getElementById('selected');
     const dropdown = document.getElementById('dropdown');
     const search = document.getElementById('search');
-    const hiddenInputs = document.getElementById('hiddenInputs');
 
     function openDropdown() {
       dropdown.classList.remove('hidden');
@@ -166,18 +187,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     function filterFacility() {
       const q = search.value.toLowerCase();
-
       document.querySelectorAll('.facility-item').forEach(item => {
         const id = item.dataset.id;
-        const name = item.innerText.toLowerCase();
-
-        if (selected[id]) {
-          item.style.display = 'none';
-          return;
-        }
-
-        // FILTER NORMAL
-        item.style.display = name.includes(q) ? 'block' : 'none';
+        const name = item.dataset.name.toLowerCase();
+        item.style.display =
+          (!selected[id] && name.includes(q)) ? 'block' : 'none';
       });
     }
 
@@ -186,51 +200,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       const name = el.dataset.name;
 
       if (selected[id]) return;
+      selected[id] = true;
 
-      selected[id] = name;
-
-      // TAG
       selectedBox.innerHTML += `
-      <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2">
-        ${name}
-        <button type="button" onclick="removeFacility(${id})">×</button>
-      </span>
-    `;
+    <div id="sf-${id}"
+  class="flex items-center gap-3 bg-white border border-slate-200
+         px-4 py-2 rounded-2xl shadow-sm
+         hover:shadow transition">
 
-      // HIDDEN INPUT
-      hiddenInputs.innerHTML += `
-      <input type="hidden" name="fasilitas[]" id="f-${id}" value="${id}">
-    `;
+  <!-- NAMA FASILITAS -->
+  <span class="font-medium text-slate-700 whitespace-nowrap">
+    ${name}
+  </span>
 
-      // REMOVE FROM DROPDOWN
+  <span>-</span>
+
+  <!-- QTY -->
+  <div class="flex items-center gap-2">
+    <input
+      type="number"
+      min="1"
+      value="1"
+      name="fasilitas[${id}]"
+      class="w-16 px-2 py-1 text-sm text-center
+             border border-slate-300 rounded-lg
+             focus:ring-2 focus:ring-blue-500 focus:outline-none">
+  </div>
+
+  <!-- REMOVE -->
+  <button
+    type="button"
+    onclick="removeFacility(${id})"
+    title="Hapus fasilitas"
+    class="ml-auto text-slate-400 hover:text-red-500
+           text-lg font-bold transition">
+    ×
+  </button>
+</div>
+
+  `;
+
       el.style.display = 'none';
-
       search.value = '';
       dropdown.classList.add('hidden');
     }
 
     function removeFacility(id) {
       delete selected[id];
-      document.getElementById(`f-${id}`).remove();
-      renderSelected();
+      document.getElementById(`sf-${id}`).remove();
 
-      // SHOW BACK TO DROPDOWN
       document.querySelectorAll('.facility-item').forEach(item => {
         if (item.dataset.id == id) {
           item.style.display = 'block';
         }
-      });
-    }
-
-    function renderSelected() {
-      selectedBox.innerHTML = '';
-      Object.entries(selected).forEach(([id, name]) => {
-        selectedBox.innerHTML += `
-        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2">
-          ${name}
-          <button type="button" onclick="removeFacility(${id})">×</button>
-        </span>
-      `;
       });
     }
   </script>

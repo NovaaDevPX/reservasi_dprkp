@@ -71,8 +71,11 @@ CREATE TABLE reservasi (
     'Dibatalkan'
   ) DEFAULT 'Menunggu Admin',
   alasan_tolak TEXT,
+  kabag_id INT UNSIGNED NULL,
+  ttd_kabag VARCHAR(255) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (kabag_id) REFERENCES users(id),
   FOREIGN KEY (ruangan_id) REFERENCES ruangan(id)
 );
 
