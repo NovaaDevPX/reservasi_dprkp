@@ -65,7 +65,7 @@ $query = mysqli_query($koneksi, "
   JOIN users u ON r.user_id = u.id
   JOIN ruangan ru ON r.ruangan_id = ru.id
   $whereSQL
-  ORDER BY r.tanggal DESC
+  ORDER BY r.id DESC
   LIMIT $limit OFFSET $offset
 ");
 

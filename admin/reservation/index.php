@@ -34,6 +34,28 @@ if (!empty($where)) {
 }
 
 /* =====================
+   PAGINATION
+===================== */
+$limit = 15;
+$page  = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $limit;
+
+/* =====================
+   TOTAL DATA
+===================== */
+$countQuery = mysqli_query($koneksi, "
+  SELECT COUNT(*) AS total
+  FROM reservasi r
+  JOIN users u ON r.user_id = u.id
+  JOIN ruangan ru ON r.ruangan_id = ru.id
+  $whereSql
+");
+
+$totalData  = mysqli_fetch_assoc($countQuery)['total'];
+$totalPages = ceil($totalData / $limit);
+
+
+/* =====================
    QUERY RESERVASI
 ===================== */
 $query = mysqli_query($koneksi, "
@@ -46,7 +68,8 @@ $query = mysqli_query($koneksi, "
   JOIN users u ON r.user_id = u.id
   JOIN ruangan ru ON r.ruangan_id = ru.id
   $whereSql
-  ORDER BY r.tanggal DESC, r.jam_mulai DESC
+  ORDER BY r.created_at DESC
+  LIMIT $limit OFFSET $offset
 ");
 
 if (!$query) {
@@ -146,7 +169,7 @@ if (!$query) {
 
         <tbody class="divide-y">
           <?php if (mysqli_num_rows($query) > 0): ?>
-            <?php $no = 1; ?>
+            <?php $no = $offset + 1; ?>
             <?php while ($row = mysqli_fetch_assoc($query)): ?>
 
               <?php
@@ -226,7 +249,68 @@ if (!$query) {
             </tr>
           <?php endif; ?>
         </tbody>
+
       </table>
+      <!-- PAGINATION (ELLIPSIS) -->
+      <?php if ($totalPages > 1): ?>
+        <div class="flex justify-center items-center gap-2 p-6 text-sm">
+
+          <!-- PREV -->
+          <a href="?<?= http_build_query(array_merge($_GET, ['page' => max(1, $page - 1)])) ?>"
+            class="px-3 py-2 rounded-lg border
+      <?= $page == 1 ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-100' ?>">
+            ‹ Prev
+          </a>
+
+          <?php
+          $range = 2;
+          $start = max(2, $page - $range);
+          $end   = min($totalPages - 1, $page + $range);
+          ?>
+
+          <!-- PAGE 1 -->
+          <a href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>"
+            class="px-3 py-2 rounded-lg
+      <?= $page == 1 ? 'bg-blue-600 text-white' : 'border hover:bg-slate-100' ?>">
+            1
+          </a>
+
+          <!-- ELLIPSIS KIRI -->
+          <?php if ($start > 2): ?>
+            <span class="px-2 text-slate-400">…</span>
+          <?php endif; ?>
+
+          <!-- PAGE TENGAH -->
+          <?php for ($i = $start; $i <= $end; $i++): ?>
+            <a href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"
+              class="px-3 py-2 rounded-lg
+        <?= $page == $i ? 'bg-blue-600 text-white' : 'border hover:bg-slate-100' ?>">
+              <?= $i ?>
+            </a>
+          <?php endfor; ?>
+
+          <!-- ELLIPSIS KANAN -->
+          <?php if ($end < $totalPages - 1): ?>
+            <span class="px-2 text-slate-400">…</span>
+          <?php endif; ?>
+
+          <!-- PAGE TERAKHIR -->
+          <a href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>"
+            class="px-3 py-2 rounded-lg
+      <?= $page == $totalPages ? 'bg-blue-600 text-white' : 'border hover:bg-slate-100' ?>">
+            <?= $totalPages ?>
+          </a>
+
+          <!-- NEXT -->
+          <a href="?<?= http_build_query(array_merge($_GET, ['page' => min($totalPages, $page + 1)])) ?>"
+            class="px-3 py-2 rounded-lg border
+      <?= $page == $totalPages ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-100' ?>">
+            Next ›
+          </a>
+
+        </div>
+      <?php endif; ?>
+
     </div>
 
   </div>

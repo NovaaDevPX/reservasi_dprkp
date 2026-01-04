@@ -16,15 +16,13 @@ $user_id = $_SESSION['id_user'];
    DATA RESERVASI
 ===================== */
 $reservasi = mysqli_query($koneksi, "
-  SELECT 
-    r.*,
-    ru.nama_ruangan,
-    ru.kapasitas
+  SELECT r.*, ru.nama_ruangan, ru.kapasitas
   FROM reservasi r
   JOIN ruangan ru ON r.ruangan_id = ru.id
   WHERE r.user_id = $user_id
-  ORDER BY r.tanggal DESC, r.jam_mulai DESC
+  ORDER BY r.created_at DESC
 ");
+
 
 /* =====================
    HELPER STATUS

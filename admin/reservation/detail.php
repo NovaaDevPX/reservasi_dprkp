@@ -195,6 +195,36 @@ $statusClass = match ($data['status']) {
         </div>
       <?php endif; ?>
 
+      <!-- TANDA TANGAN KEPALA BAGIAN -->
+      <?php if ($data['status'] === 'Disetujui' && !empty($data['ttd_kabag'])): ?>
+        <div class="pt-6 border-t">
+          <h3 class="font-semibold text-slate-800 mb-3">
+            Tanda Tangan Kepala Bagian
+          </h3>
+
+          <div class="flex items-center gap-6">
+            <div class="border rounded-xl p-4 bg-slate-50">
+              <img
+                src="../../uploads/ttd/<?= htmlspecialchars($data['ttd_kabag']); ?>"
+                alt="TTD Kepala Bagian"
+                class="max-h-32 object-contain"
+                onerror="this.style.display='none'">
+            </div>
+
+            <div class="text-sm text-slate-600">
+              <p class="font-semibold text-slate-800">
+                Disetujui oleh Kepala Bagian
+              </p>
+              <p class="text-xs text-slate-500">
+                Tanggal persetujuan:
+                <?= date('d M Y', strtotime($data['updated_at'] ?? $data['created_at'])); ?>
+              </p>
+            </div>
+          </div>
+        </div>
+      <?php endif; ?>
+
+
       <div class="flex gap-4 justify-end">
         <?php if ($data['status'] === 'Menunggu Admin'): ?>
           <a href="approve.php?id=<?= $data['id']; ?>"
