@@ -124,6 +124,17 @@ function active($path, $currentUri)
         <span>Data Fasilitas</span>
       </a>
 
+      <a href="<?= $baseUrl ?>/admin/report/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/report', $currentUri); ?>">
+
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M4 6h6v6H4zM14 6h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+        </svg>
+
+        <span>Laporan</span>
+      </a>
+
     <?php endif; ?>
 
     <!-- ================= KEPALA BAGIAN ================= -->

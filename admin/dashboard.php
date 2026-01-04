@@ -298,6 +298,9 @@ while ($row = mysqli_fetch_assoc($result)) {
         height: 'auto',
         dayMaxEvents: 3,
 
+        displayEventTime: false,
+        eventTimeFormat: false,
+
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',

@@ -111,7 +111,7 @@ function statusBadge($status)
                 </td>
 
                 <td class="px-4 py-3 text-center">
-                  <a href="<?= $baseUrl ?>/pegawai/make-reservation/detail.php?id=<?= $r['id']; ?>"
+                  <a href="<?= $baseUrl ?>/pegawai/reservation-history/detail.php?id=<?= $r['id']; ?>"
                     class="text-blue-600 hover:underline text-sm font-medium">
                     Detail
                   </a>

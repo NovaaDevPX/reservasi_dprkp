@@ -123,25 +123,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       /* FASILITAS */
       if ($mode === 'default') {
+
         $df = mysqli_query($koneksi, "
-          SELECT fasilitas_id, qty
-          FROM ruangan_fasilitas
-          WHERE ruangan_id=$ruangan_id
-        ");
+    SELECT fasilitas_id, qty
+    FROM ruangan_fasilitas
+    WHERE ruangan_id = $ruangan_id
+  ");
 
         while ($f = mysqli_fetch_assoc($df)) {
-          mysqli_query($koneksi, "
-            INSERT INTO reservasi_fasilitas
-            VALUES ($reservasi_id, {$f['fasilitas_id']}, {$f['qty']})
-          ");
+          $ok = mysqli_query($koneksi, "
+      INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
+      VALUES ($reservasi_id, {$f['fasilitas_id']}, {$f['qty']})
+    ");
+
+          if (!$ok) {
+            throw new Exception('Gagal insert fasilitas default');
+          }
         }
       } else {
-        foreach ($_POST['fasilitas'] ?? [] as $fid) {
-          $qty = (int)($_POST['qty'][$fid] ?? 1);
-          mysqli_query($koneksi, "
-            INSERT INTO reservasi_fasilitas
-            VALUES ($reservasi_id, $fid, $qty)
-          ");
+
+        if (empty($_POST['fasilitas'])) {
+          throw new Exception('Fasilitas custom belum dipilih');
+        }
+
+        foreach ($_POST['fasilitas'] as $fid) {
+          $fid = (int)$fid;
+          $qty = isset($_POST['qty'][$fid]) ? (int)$_POST['qty'][$fid] : 1;
+
+          if ($qty < 1) {
+            throw new Exception('Qty fasilitas tidak valid');
+          }
+
+          $ok = mysqli_query($koneksi, "
+      INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
+      VALUES ($reservasi_id, $fid, $qty)
+    ");
+
+          if (!$ok) {
+            throw new Exception('Gagal insert fasilitas custom');
+          }
         }
       }
 
@@ -161,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
 
       mysqli_commit($koneksi);
-      header("Location: " . $baseUrl . "/pegawai/reservation-history/detail.php?id=$reservasi_id&success=add");
+      header("Location: /reservasi_dprkp/pegawai/reservation-history/detail.php?id=$reservasi_id&success=add");
       exit;
     } catch (Exception $e) {
       mysqli_rollback($koneksi);
@@ -302,39 +322,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
 
   <script>
+    /* =====================
+   ELEMENT
+===================== */
     const ruangan = document.getElementById('ruangan');
     const tanggal = document.getElementById('tanggal');
     const jadwal = document.getElementById('jadwal');
     const defaultList = document.getElementById('defaultList');
     const customBox = document.getElementById('customBox');
     const defaultBox = document.getElementById('defaultBox');
+    const dropdown = document.getElementById('dropdown');
+    const search = document.getElementById('search');
+    const customList = document.getElementById('customList');
 
+    /* =====================
+       MODE
+    ===================== */
     function toggleMode(v) {
       customBox.classList.toggle('hidden', v !== 'custom');
       defaultBox.classList.toggle('hidden', v === 'custom');
     }
 
-    /* JADWAL */
+    /* =====================
+       JADWAL
+    ===================== */
     function loadJadwal() {
       if (!ruangan.value || !tanggal.value) return;
+
       fetch(`?ajax=jadwal&ruangan_id=${ruangan.value}&tanggal=${tanggal.value}`)
-        .then(r => r.json())
-        .then(d => {
-          jadwal.innerHTML = d.length ?
+        .then(res => res.json())
+        .then(data => {
+          jadwal.innerHTML = data.length ?
             '<span class="text-red-600">Terpakai:</span><br>' +
-            d.map(j => `• ${j.jam_mulai} - ${j.jam_selesai}`).join('<br>') :
+            data.map(j => `• ${j.jam_mulai} - ${j.jam_selesai}`).join('<br>') :
             '<span class="text-green-600">🟢 Sepanjang hari tersedia</span>';
         });
     }
 
-    /* DEFAULT */
+    /* =====================
+       DEFAULT FASILITAS
+    ===================== */
     function loadDefault() {
       if (!ruangan.value) return;
+
       fetch(`?ajax=fasilitas_default&ruangan_id=${ruangan.value}`)
-        .then(r => r.json())
-        .then(d => {
-          defaultList.innerHTML = d.length ?
-            d.map(f => `<span class="px-3 py-1 bg-slate-200 rounded-full">${f.nama} (${f.qty})</span>`).join('') :
+        .then(res => res.json())
+        .then(data => {
+          defaultList.innerHTML = data.length ?
+            data.map(f =>
+              `<span class="px-3 py-1 bg-slate-200 rounded-full">
+              ${f.nama} (${f.qty})
+            </span>`
+            ).join('') :
             '<span class="italic">Tidak ada fasilitas</span>';
         });
     }
@@ -345,11 +384,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     });
     tanggal.addEventListener('change', loadJadwal);
 
-    /* CUSTOM */
-    const selected = {};
-    const dropdown = document.getElementById('dropdown');
-    const search = document.getElementById('search');
-    const customList = document.getElementById('customList');
+    /* =====================
+       CUSTOM FASILITAS
+    ===================== */
+    const selected = {}; // fasilitas yang aktif
+    const qtyMemory = {}; // penyimpan qty terakhir
 
     function openDropdown() {
       dropdown.classList.remove('hidden');
@@ -357,45 +396,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     document.addEventListener('click', e => {
-      if (!e.target.closest('.relative')) dropdown.classList.add('hidden');
+      if (!e.target.closest('.relative')) {
+        dropdown.classList.add('hidden');
+      }
     });
 
     function filterFacility() {
-      const q = search.value.toLowerCase();
-      document.querySelectorAll('.facility-item').forEach(i => {
-        const id = i.dataset.id;
-        const name = i.innerText.toLowerCase();
-        i.style.display = selected[id] ? 'none' : (name.includes(q) ? 'block' : 'none');
+      const keyword = search.value.toLowerCase();
+
+      document.querySelectorAll('.facility-item').forEach(item => {
+        const id = item.dataset.id;
+        const name = item.innerText.toLowerCase();
+
+        if (selected[id]) {
+          item.style.display = 'none';
+        } else {
+          item.style.display = name.includes(keyword) ? 'block' : 'none';
+        }
       });
     }
 
     function addFacility(el) {
       const id = el.dataset.id;
       const name = el.dataset.name;
+
       if (selected[id]) return;
 
       selected[id] = true;
 
-      customList.innerHTML += `
-  <div id="row-${id}" class="flex items-center gap-3 border rounded-xl p-3">
-    <input type="hidden" name="fasilitas[]" value="${id}">
-    <div class="flex-1 font-medium">${name}</div>
-    <input type="number" name="qty[${id}]" value="1" min="1"
-      class="w-20 border rounded px-2 py-1">
-    <button type="button" onclick="removeFacility(${id})"
-      class="text-red-500 font-bold">×</button>
-  </div>`;
+      const qty = qtyMemory[id] ?? 1;
+
+      customList.insertAdjacentHTML('beforeend', `
+    <div id="row-${id}" class="flex items-center gap-3 border rounded-xl p-3">
+      <input type="hidden" name="fasilitas[]" value="${id}">
+      <div class="flex-1 font-medium">${name}</div>
+
+      <input type="number"
+             name="qty[${id}]"
+             value="${qty}"
+             min="1"
+             onchange="rememberQty(${id}, this.value)"
+             class="w-20 border rounded px-2 py-1">
+
+      <button type="button"
+              onclick="removeFacility(${id})"
+              class="text-red-500 font-bold text-xl leading-none">
+        ×
+      </button>
+    </div>
+  `);
 
       el.style.display = 'none';
       search.value = '';
       dropdown.classList.add('hidden');
     }
 
+    function rememberQty(id, val) {
+      qtyMemory[id] = val;
+    }
+
     function removeFacility(id) {
+      const row = document.getElementById(`row-${id}`);
+      if (!row) return;
+
+      const qtyInput = row.querySelector('input[type=number]');
+      if (qtyInput) {
+        qtyMemory[id] = qtyInput.value;
+      }
+
       delete selected[id];
-      document.getElementById(`row-${id}`).remove();
-      document.querySelectorAll('.facility-item').forEach(i => {
-        if (i.dataset.id == id) i.style.display = 'block';
+      row.remove();
+
+      document.querySelectorAll('.facility-item').forEach(item => {
+        if (item.dataset.id === String(id)) {
+          item.style.display = 'block';
+        }
       });
     }
   </script>
