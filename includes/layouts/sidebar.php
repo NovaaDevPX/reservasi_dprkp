@@ -86,6 +86,23 @@ function active($path, $currentUri)
         <span>Riwayat Reservasi</span>
       </a>
 
+      <a href="<?= $baseUrl ?>/pegawai/account/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/pegawai/account', $currentUri); ?>">
+
+        <!-- Users -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a4 4 0 00-4-4h-1" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 20H4v-2a4 4 0 014-4h1" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
+        </svg>
+
+        <span>Account</span>
+      </a>
+
     <?php endif; ?>
 
     <!-- ================= ADMIN ================= -->
@@ -133,6 +150,23 @@ function active($path, $currentUri)
         </svg>
 
         <span>Laporan</span>
+      </a>
+
+      <a href="<?= $baseUrl ?>/admin/account/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/account', $currentUri); ?>">
+
+        <!-- Users -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a4 4 0 00-4-4h-1" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 20H4v-2a4 4 0 014-4h1" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
+        </svg>
+
+        <span>Account</span>
       </a>
 
     <?php endif; ?>

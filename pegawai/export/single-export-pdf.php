@@ -9,6 +9,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'pegawai') {
 require '../../vendor/autoload.php';
 
 use Dompdf\Dompdf;
+use Dompdf\Options;
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
@@ -48,18 +49,56 @@ $fasilitas = mysqli_query($koneksi, "
 ");
 
 /* =======================
-   PATH TTD 
+   PATH TTD
 ======================= */
-
 $ttd = '';
-
 if (!empty($data['ttd_kabag'])) {
   $ttd = 'http://localhost/reservasi_dprkp/uploads/ttd/' . $data['ttd_kabag'];
 }
 
+/* =======================
+   STATUS STYLE
+======================= */
+$status = $data['status'];
+
+$statusColor = '#6b7280';
+$statusBg    = '#f3f4f6';
+$statusNote  = '';
+
+switch ($status) {
+  case 'Menunggu Admin':
+    $statusColor = '#1d4ed8';
+    $statusBg    = '#dbeafe';
+    $statusNote  = 'Reservasi sedang menunggu persetujuan Admin.';
+    break;
+
+  case 'Menunggu Kepala Bagian':
+    $statusColor = '#7c3aed';
+    $statusBg    = '#ede9fe';
+    $statusNote  = 'Reservasi telah disetujui Admin dan menunggu persetujuan Kepala Bagian.';
+    break;
+
+  case 'Disetujui':
+    $statusColor = '#047857';
+    $statusBg    = '#d1fae5';
+    $statusNote  = 'Reservasi telah disetujui dan dapat digunakan.';
+    break;
+
+  case 'Ditolak':
+    $statusColor = '#b91c1c';
+    $statusBg    = '#fee2e2';
+    $statusNote  = 'Reservasi ditolak. Alasan: ' . ($data['alasan_tolak'] ?: '-');
+    break;
+
+  case 'Dibatalkan':
+    $statusColor = '#92400e';
+    $statusBg    = '#fef3c7';
+    $statusNote  = 'Reservasi dibatalkan oleh pemohon.';
+    break;
+}
 
 /* =======================
-   HTML PDF (MODERN)
+   HTML PDF
 ======================= */
 $html = '
 <!DOCTYPE html>
@@ -71,30 +110,22 @@ $html = '
     font-family: DejaVu Sans, sans-serif;
     font-size: 12px;
     color: #111827;
-    background: #ffffff;
   }
 
   .header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
 
   .header h1 {
     font-size: 20px;
     margin: 0;
-    letter-spacing: .5px;
-  }
-
-  .header p {
-    margin: 6px 0 0;
-    font-size: 11px;
-    color: #374151;
   }
 
   .divider {
     height: 3px;
     background: #2563eb;
-    margin: 16px 0 28px;
+    margin: 16px 0 24px;
   }
 
   .card {
@@ -105,10 +136,8 @@ $html = '
   }
 
   .card-title {
-    font-size: 13px;
     font-weight: bold;
     margin-bottom: 12px;
-    color: #1f2937;
   }
 
   table {
@@ -117,29 +146,33 @@ $html = '
   }
 
   .detail td {
-    padding: 8px 6px;
-    vertical-align: top;
+    padding: 6px;
   }
 
-  .detail .label {
+  .label {
     width: 30%;
     color: #6b7280;
-    font-weight: 600;
+    font-weight: bold;
   }
 
-  .detail .value {
-    font-weight: 500;
+  .status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: bold;
   }
 
-  .table {
-    width: 100%;
-    border-collapse: collapse;
+  .status-note {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 11px;
   }
 
   .table th {
     background: #f3f4f6;
     padding: 8px;
-    font-size: 11px;
     text-align: left;
     border-bottom: 1px solid #d1d5db;
   }
@@ -150,18 +183,13 @@ $html = '
   }
 
   .signature {
-    margin-top: 50px;
+    margin-top: 40px;
     width: 100%;
   }
 
   .signature td {
     text-align: right;
-    border: none;
     font-size: 12px;
-  }
-
-  .signature img {
-    margin: 10px 0;
   }
 
   .footer {
@@ -183,44 +211,32 @@ $html = '
 <div class="card">
   <div class="card-title">Informasi Reservasi</div>
   <table class="detail">
-    <tr>
-      <td class="label">Nama Pegawai</td>
-      <td class="value">' . $data['nama_user'] . '</td>
-    </tr>
-    <tr>
-      <td class="label">Ruangan</td>
-      <td class="value">' . $data['nama_ruangan'] . '</td>
-    </tr>
-    <tr>
-      <td class="label">Tanggal</td>
-      <td class="value">' . date('d M Y', strtotime($data['tanggal'])) . '</td>
-    </tr>
-    <tr>
-      <td class="label">Waktu</td>
-      <td class="value">' . $data['jam_mulai'] . ' - ' . $data['jam_selesai'] . '</td>
-    </tr>
-    <tr>
-      <td class="label">Jumlah Peserta</td>
-      <td class="value">' . $data['jumlah_peserta'] . ' Orang</td>
-    </tr>
+    <tr><td class="label">Nama Pegawai</td><td>' . $data['nama_user'] . '</td></tr>
+    <tr><td class="label">Ruangan</td><td>' . $data['nama_ruangan'] . '</td></tr>
+    <tr><td class="label">Tanggal</td><td>' . date('d M Y', strtotime($data['tanggal'])) . '</td></tr>
+    <tr><td class="label">Waktu</td><td>' . $data['jam_mulai'] . ' - ' . $data['jam_selesai'] . '</td></tr>
+    <tr><td class="label">Jumlah Peserta</td><td>' . $data['jumlah_peserta'] . ' Orang</td></tr>
     <tr>
       <td class="label">Status</td>
-      <td class="value">' . $data['status'] . '</td>
+      <td>
+        <span class="status-badge" style="background:' . $statusBg . ';color:' . $statusColor . '">
+          ' . $status . '
+        </span>
+      </td>
     </tr>
-    <tr>
-      <td class="label">Keperluan</td>
-      <td class="value">' . $data['keperluan'] . '</td>
-    </tr>
+    <tr><td class="label">Keperluan</td><td>' . $data['keperluan'] . '</td></tr>
   </table>
+
+  <div class="status-note"
+    style="background:' . $statusBg . ';color:' . $statusColor . ';border-left:4px solid ' . $statusColor . '">
+    ' . $statusNote . '
+  </div>
 </div>
 
 <div class="card">
   <div class="card-title">Fasilitas Digunakan</div>
   <table class="table">
-    <tr>
-      <th>Fasilitas</th>
-      <th width="20%">Jumlah</th>
-    </tr>';
+    <tr><th>Fasilitas</th><th width="20%">Jumlah</th></tr>';
 
 while ($f = mysqli_fetch_assoc($fasilitas)) {
   $html .= '
@@ -240,14 +256,14 @@ $html .= '
       <p>Disetujui oleh,</p>
       <p><b>Kepala Bagian</b></p>';
 
-if ($ttd) {
+if ($status === 'Disetujui' && $ttd) {
   $html .= '<img src="' . $ttd . '" height="35">';
 } else {
   $html .= '<br><br><br>';
 }
 
 $html .= '
-      <p><b>' . $data['nama_kabag'] . '</b></p>
+      <p><b>' . ($data['nama_kabag'] ?: '-') . '</b></p>
     </td>
   </tr>
 </table>
@@ -260,11 +276,10 @@ $html .= '
 </html>
 ';
 
-
 /* =======================
    GENERATE PDF
 ======================= */
-$options = new \Dompdf\Options();
+$options = new Options();
 $options->set('isRemoteEnabled', true);
 $options->set('isHtml5ParserEnabled', true);
 
@@ -272,4 +287,4 @@ $pdf = new Dompdf($options);
 $pdf->loadHtml($html);
 $pdf->setPaper('A4', 'portrait');
 $pdf->render();
-$pdf->stream("Reservasi-{$id}.pdf", ["Attachment" => false]);
+$pdf->stream("Reservasi-$id.pdf", ["Attachment" => false]);

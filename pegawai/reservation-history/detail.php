@@ -83,7 +83,7 @@ $statusClass = match ($data['status']) {
 
 <head>
   <meta charset="UTF-8">
-  <title>Detail Reservasi | Admin</title>
+  <title>Detail Reservasi | Pegawai</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -123,7 +123,6 @@ $statusClass = match ($data['status']) {
       </a>
 
     </div>
-
 
     <!-- CARD -->
     <div class="bg-white rounded-2xl shadow p-6 space-y-8">

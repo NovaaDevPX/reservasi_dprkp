@@ -95,11 +95,33 @@ $statusClass = match ($data['status']) {
   <div class="main-content p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
 
     <!-- HEADER -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-slate-800 mb-2">Detail Reservasi</h1>
-      <a href="index.php" class="text-blue-600 hover:underline text-sm">
-        ← Kembali ke daftar
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+      <div>
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">Detail Reservasi</h1>
+        <a href="index.php" class="text-blue-600 hover:underline text-sm">
+          ← Kembali ke daftar
+        </a>
+      </div>
+
+      <!-- BUTTON EXPORT PDF -->
+      <a
+        href="<?php echo $baseUrl; ?>/admin/report/single-export-pdf.php?id=<?= $data['id']; ?>"
+        target="_blank"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+           bg-red-600 text-white text-sm font-semibold
+           hover:bg-red-700 transition shadow">
+
+        <!-- ICON -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 4v12m0 0l-3-3m3 3l3-3M6 20h12" />
+        </svg>
+
+        Export PDF
       </a>
+
     </div>
 
     <!-- CARD -->

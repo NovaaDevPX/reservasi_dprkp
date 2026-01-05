@@ -55,64 +55,120 @@ if (isset($_POST['login'])) {
 <head>
   <meta charset="UTF-8">
   <title>Login | Sistem Reservasi DPRKP</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f5f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    .login-container {
-      background: white;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      width: 380px;
-      text-align: center;
-    }
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    .login-container h2 {
-      margin-bottom: 20px;
-      font-size: 18px;
-    }
-
-    .login-container input {
-      width: 95%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    .login-container button {
-      width: 100%;
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    .login-container button:hover {
-      background: #0056b3;
-    }
-  </style>
+  <!-- Icons -->
+  <link href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css" rel="stylesheet">
 </head>
 
-<body>
-  <div class="login-container">
-    <h2>Sistem Reservasi Ruang Rapat & Aula DPRKP</h2>
-    <form method="POST">
-      <input type="text" name="username" placeholder="NIP" required>
-      <input type="password" name="password" placeholder="Password" required>
-      <button type="submit" name="login">Login</button>
+<body class="min-h-screen flex items-center justify-center
+             bg-gradient-to-br from-blue-50 via-white to-slate-100">
+
+  <!-- CARD -->
+  <div class="w-full max-w-md bg-white/80 backdrop-blur
+              border border-slate-200 rounded-3xl shadow-xl p-8">
+
+    <!-- HEADER -->
+    <div class="text-center mb-8">
+      <div class="mx-auto w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-4">
+        <i class="ph ph-buildings text-2xl text-blue-600"></i>
+      </div>
+
+      <h1 class="text-xl font-bold text-slate-800">
+        Sistem Reservasi
+      </h1>
+      <p class="text-sm text-slate-500">
+        Ruang Rapat & Aula DPRKP
+      </p>
+    </div>
+
+    <!-- FORM -->
+    <form method="POST" class="space-y-5">
+
+      <!-- NIP -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+          NIP
+        </label>
+        <div class="relative">
+          <i class="ph ph-identification-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input
+            type="text"
+            name="username"
+            required
+            placeholder="Masukkan NIP"
+            class="w-full pl-11 pr-4 py-2.5 rounded-xl
+                   border border-slate-300
+                   focus:ring-2 focus:ring-blue-200
+                   focus:border-blue-500">
+        </div>
+      </div>
+
+      <!-- PASSWORD -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+          Password
+        </label>
+        <div class="relative">
+          <i class="ph ph-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            placeholder="Masukkan password"
+            class="w-full pl-11 pr-11 py-2.5 rounded-xl
+                   border border-slate-300
+                   focus:ring-2 focus:ring-blue-200
+                   focus:border-blue-500">
+
+          <!-- TOGGLE -->
+          <button type="button"
+            onclick="togglePassword()"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <i id="eyeIcon" class="ph ph-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- BUTTON -->
+      <button
+        type="submit"
+        name="login"
+        class="w-full py-3 rounded-xl
+               bg-blue-600 hover:bg-blue-700
+               text-white font-semibold
+               shadow-lg transition flex items-center justify-center gap-2">
+        <i class="ph ph-sign-in"></i>
+        Login
+      </button>
     </form>
+
+    <!-- FOOTER -->
+    <div class="mt-8 text-center text-xs text-slate-400">
+      © <?= date('Y'); ?> DPRKP • Sistem Reservasi
+    </div>
   </div>
+
+  <!-- SCRIPT -->
+  <script>
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'ph ph-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'ph ph-eye';
+      }
+    }
+  </script>
+
 </body>
 
 </html>

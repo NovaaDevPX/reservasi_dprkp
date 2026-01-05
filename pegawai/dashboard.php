@@ -82,7 +82,7 @@ function badgeStatus($status)
     <!-- HEADER -->
     <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow mb-6">
       <h1 class="text-3xl font-bold text-gray-800 mb-2">
-        <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Admin
+        <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Pegawai
       </h1>
       <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
     </div>
