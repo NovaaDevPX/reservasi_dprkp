@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../../config/koneksi.php';
+include '../../includes/notification-helper.php';
 
 /* =====================
    AUTH
@@ -16,13 +17,23 @@ $kabag_id = $_SESSION['id_user'] ?? 0;
 /* =====================
    DATA RESERVASI
 ===================== */
-$data = mysqli_fetch_assoc(mysqli_query($koneksi, "
-  SELECT r.*, u.nama, ru.nama_ruangan
+$q = mysqli_query($koneksi, "
+  SELECT 
+    r.id,
+    r.user_id,
+    r.tanggal,
+    r.jam_mulai,
+    r.jam_selesai,
+    r.keperluan,
+    u.nama AS nama_pemohon,
+    ru.nama_ruangan
   FROM reservasi r
   JOIN users u ON r.user_id = u.id
   JOIN ruangan ru ON r.ruangan_id = ru.id
   WHERE r.id = $id
-"));
+");
+
+$data = mysqli_fetch_assoc($q);
 
 if (!$data) {
   die('Data tidak ditemukan');
@@ -35,7 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $ttdFileName = null;
 
-  /* UPLOAD FOTO */
+  /* =====================
+     UPLOAD FOTO
+  ===================== */
   if ($_POST['metode_ttd'] === 'upload') {
     if (!empty($_FILES['ttd_file']['name'])) {
       $ext = pathinfo($_FILES['ttd_file']['name'], PATHINFO_EXTENSION);
@@ -47,7 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 
-  /* CANVAS */
+  /* =====================
+     CANVAS
+  ===================== */
   if ($_POST['metode_ttd'] === 'canvas') {
     if (!empty($_POST['ttd_canvas'])) {
       $img = str_replace('data:image/png;base64,', '', $_POST['ttd_canvas']);
@@ -61,12 +76,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die('TTD wajib diisi');
   }
 
+  /* =====================
+     UPDATE STATUS
+  ===================== */
   mysqli_query($koneksi, "
     UPDATE reservasi SET
       status = 'Disetujui',
       kabag_id = $kabag_id,
       ttd_kabag = '$ttdFileName'
     WHERE id = $id
+  ");
+
+  /* =====================
+     NOTIFIKASI KE PEGAWAI
+  ===================== */
+  mysqli_query($koneksi, "
+    INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
+    VALUES (
+      {$data['user_id']},
+      $id,
+      'Reservasi Disetujui',
+      'Reservasi Anda untuk ruangan {$data['nama_ruangan']} telah disetujui oleh Kepala Bagian.'
+    )
+  ");
+
+  /* =====================
+     NOTIFIKASI KE ADMIN
+  ===================== */
+  kirimNotifikasiByRole(
+    $koneksi,
+    ['admin'],
+    'Reservasi Disetujui Kepala Bagian',
+    "Reservasi ID #$id telah disetujui oleh Kepala Bagian.",
+    $id
+  );
+
+  /* =====================
+     NOTIFIKASI KE KEPALA BAGIAN
+     (histori pribadi)
+  ===================== */
+  mysqli_query($koneksi, "
+    INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
+    VALUES (
+      $kabag_id,
+      $id,
+      'Reservasi Disetujui',
+      'Anda telah menyetujui reservasi ini.'
+    )
   ");
 
   header("Location: index.php?success=approve");
@@ -152,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <i class="fas fa-info-circle text-blue-600 mr-2"></i>Detail Reservasi
         </h2>
         <div class="space-y-2 text-sm">
-          <p><span class="font-medium text-gray-700">Pemohon:</span> <span class="text-gray-900"><?= htmlspecialchars($data['nama']) ?></span></p>
+          <p><span class="font-medium text-gray-700">Pemohon:</span> <span class="text-gray-900"><?= htmlspecialchars($data['nama_pemohon']) ?></span></p>
           <p><span class="font-medium text-gray-700">Ruangan:</span> <span class="text-gray-900"><?= htmlspecialchars($data['nama_ruangan']) ?></span></p>
           <p><span class="font-medium text-gray-700">Tanggal:</span> <span class="text-gray-900"><?= date('d F Y', strtotime($data['tanggal'])) ?></span></p>
           <p><span class="font-medium text-gray-700">Waktu:</span> <span class="text-gray-900"><?= htmlspecialchars($data['jam_mulai']) ?> - <?= htmlspecialchars($data['jam_selesai']) ?></span></p>

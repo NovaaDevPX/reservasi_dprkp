@@ -11,6 +11,27 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kepala_bagian') {
 }
 
 /* =====================
+   NOTIFIKASI KEPALA BAGIAN
+===================== */
+$kabag_id = $_SESSION['id_user'];
+
+$notif_unread = mysqli_fetch_assoc(mysqli_query($koneksi, "
+  SELECT COUNT(*) total
+  FROM notifikasi
+  WHERE user_id = $kabag_id
+    AND is_read = 0
+"))['total'];
+
+$notif_q = mysqli_query($koneksi, "
+  SELECT id, judul, pesan, is_read, created_at, reservasi_id
+  FROM notifikasi
+  WHERE user_id = $kabag_id
+  ORDER BY is_read ASC, created_at DESC
+  LIMIT 10
+");
+
+
+/* =====================
    FILTER
 ===================== */
 $tahun = $_GET['tahun'] ?? date('Y');
@@ -195,11 +216,55 @@ $judulTrend = $bulan
   <div class="ml-64 p-8 space-y-8">
 
     <!-- HEADER -->
-    <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">
-        <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Kepala Bagian
-      </h1>
-      <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
+    <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+          <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Kepala Bagian
+        </h1>
+        <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
+      </div>
+
+      <!-- NOTIFIKASI -->
+      <div class="relative">
+        <button id="notifBtn" class="relative text-gray-600 hover:text-blue-600">
+          <i class="fas fa-bell text-2xl"></i>
+
+          <?php if ($notif_unread > 0): ?>
+            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              <?= $notif_unread ?>
+            </span>
+          <?php endif; ?>
+        </button>
+
+        <!-- DROPDOWN -->
+        <div id="notifDropdown"
+          class="hidden absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-xl border overflow-hidden z-50">
+
+          <div class="px-4 py-3 font-semibold text-gray-700 border-b">
+            Notifikasi
+          </div>
+
+          <?php if (mysqli_num_rows($notif_q) > 0): ?>
+            <?php while ($n = mysqli_fetch_assoc($notif_q)): ?>
+              <a href="<?= $n['reservasi_id'] ? '/reservasi_dprkp/kepala-bagian/reservation/detail.php?id=' . $n['reservasi_id'] : '#' ?>"
+                data-id="<?= $n['id'] ?>"
+                class="notif-item block px-4 py-3 border-b hover:bg-gray-50
+             <?= $n['is_read'] ? 'text-gray-500' : 'font-semibold text-gray-800 bg-blue-50' ?>">
+                <div class="text-sm"><?= htmlspecialchars($n['judul']) ?></div>
+                <div class="text-xs text-gray-500"><?= htmlspecialchars($n['pesan']) ?></div>
+              </a>
+            <?php endwhile; ?>
+          <?php else: ?>
+            <div class="px-4 py-6 text-center text-gray-500 text-sm">
+              Tidak ada notifikasi
+            </div>
+          <?php endif; ?>
+
+          <div class="px-4 py-2 text-xs text-gray-500 text-center bg-gray-50">
+            Menampilkan maksimal 10 notifikasi terbaru
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- FILTER FORM -->
@@ -470,6 +535,49 @@ $judulTrend = $bulan
       }
     });
   </script>
+
+  <script>
+    const notifBtn = document.getElementById('notifBtn');
+    const notifDropdown = document.getElementById('notifDropdown');
+
+    notifBtn.addEventListener('click', () => {
+      notifDropdown.classList.toggle('hidden');
+    });
+
+    document.querySelectorAll('.notif-item').forEach(item => {
+      item.addEventListener('click', function() {
+
+        const notifId = this.dataset.id;
+
+        fetch('notification-read.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: 'id=' + notifId
+        });
+
+        // UI update
+        this.classList.remove('font-semibold', 'bg-blue-50');
+        this.classList.add('text-gray-500');
+
+        // badge update
+        const badge = document.querySelector('#notifBtn span');
+        if (badge) {
+          let count = parseInt(badge.innerText) - 1;
+          count <= 0 ? badge.remove() : badge.innerText = count;
+        }
+      });
+    });
+
+    // close when click outside
+    document.addEventListener('click', e => {
+      if (!notifBtn.contains(e.target) && !notifDropdown.contains(e.target)) {
+        notifDropdown.classList.add('hidden');
+      }
+    });
+  </script>
+
 
 </body>
 

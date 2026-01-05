@@ -25,7 +25,7 @@ if ($tanggal !== '') {
 $whereSql = 'WHERE ' . implode(' AND ', $where);
 
 /* =====================
-   QUERY
+   QUERY (DATA TERBARU)
 ===================== */
 $query = mysqli_query($koneksi, "
   SELECT 
@@ -37,7 +37,7 @@ $query = mysqli_query($koneksi, "
   JOIN users u ON r.user_id = u.id
   JOIN ruangan ru ON r.ruangan_id = ru.id
   $whereSql
-  ORDER BY r.tanggal DESC, r.jam_mulai DESC
+  ORDER BY r.created_at DESC
 ");
 
 if (!$query) {

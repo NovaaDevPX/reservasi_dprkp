@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../../config/koneksi.php';
+include '../../includes/notification-helper.php';
 
 /* =====================
    AUTH PEGAWAI
@@ -112,6 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     mysqli_begin_transaction($koneksi);
 
     try {
+      /* =====================
+         INSERT RESERVASI
+      ===================== */
       mysqli_query($koneksi, "
         INSERT INTO reservasi
         (user_id, ruangan_id, tanggal, jam_mulai, jam_selesai, keperluan, jumlah_peserta)
@@ -121,24 +125,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       $reservasi_id = mysqli_insert_id($koneksi);
 
-      /* FASILITAS */
+      /* =====================
+         FASILITAS
+      ===================== */
       if ($mode === 'default') {
 
         $df = mysqli_query($koneksi, "
-    SELECT fasilitas_id, qty
-    FROM ruangan_fasilitas
-    WHERE ruangan_id = $ruangan_id
-  ");
+          SELECT fasilitas_id, qty
+          FROM ruangan_fasilitas
+          WHERE ruangan_id = $ruangan_id
+        ");
 
         while ($f = mysqli_fetch_assoc($df)) {
-          $ok = mysqli_query($koneksi, "
-      INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
-      VALUES ($reservasi_id, {$f['fasilitas_id']}, {$f['qty']})
-    ");
-
-          if (!$ok) {
-            throw new Exception('Gagal insert fasilitas default');
-          }
+          mysqli_query($koneksi, "
+            INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
+            VALUES ($reservasi_id, {$f['fasilitas_id']}, {$f['qty']})
+          ");
         }
       } else {
 
@@ -154,33 +156,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Qty fasilitas tidak valid');
           }
 
-          $ok = mysqli_query($koneksi, "
-      INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
-      VALUES ($reservasi_id, $fid, $qty)
-    ");
-
-          if (!$ok) {
-            throw new Exception('Gagal insert fasilitas custom');
-          }
+          mysqli_query($koneksi, "
+            INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
+            VALUES ($reservasi_id, $fid, $qty)
+          ");
         }
       }
 
-      /* NOTIFIKASI */
-      $n = mysqli_query($koneksi, "
-        SELECT id FROM users WHERE role IN ('admin','kepala_bagian')
+      /* =====================
+         NOTIFIKASI
+      ===================== */
+
+      // 1️⃣ Pegawai (pemohon)
+      mysqli_query($koneksi, "
+        INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
+        VALUES (
+          $user_id,
+          $reservasi_id,
+          'Reservasi Berhasil Dikirim',
+          'Reservasi Anda berhasil dibuat dan sedang menunggu persetujuan admin.'
+        )
       ");
 
-      while ($u = mysqli_fetch_assoc($n)) {
-        mysqli_query($koneksi, "
-          INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
-          VALUES
-          ({$u['id']}, $reservasi_id,
-           'Reservasi Baru',
-           'Pengajuan reservasi baru dari pegawai.')
-        ");
-      }
+      // 2️⃣ Admin
+      kirimNotifikasiByRole(
+        $koneksi,
+        ['admin'],
+        'Reservasi Baru',
+        'Terdapat pengajuan reservasi baru yang menunggu persetujuan.',
+        $reservasi_id
+      );
+
+      // 3️⃣ Kepala Bagian (info awal)
+      kirimNotifikasiByRole(
+        $koneksi,
+        ['kepala_bagian'],
+        'Reservasi Baru',
+        'Terdapat pengajuan reservasi baru dari pegawai.',
+        $reservasi_id
+      );
 
       mysqli_commit($koneksi);
+
       header("Location: /reservasi_dprkp/pegawai/reservation-history/detail.php?id=$reservasi_id&success=add");
       exit;
     } catch (Exception $e) {
@@ -190,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 

@@ -3,9 +3,9 @@ session_start();
 include '../../config/koneksi.php';
 
 /* =====================
-   AUTH PEGAWAI
+   AUTH KEPALA BAGIAN
 ===================== */
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'pegawai') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kepala_bagian') {
   header("Location: ../../index.php");
   exit;
 }
@@ -83,7 +83,7 @@ $statusClass = match ($data['status']) {
 
 <head>
   <meta charset="UTF-8">
-  <title>Detail Reservasi | Admin</title>
+  <title>Detail Reservasi | Kepala Bagian</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -95,35 +95,12 @@ $statusClass = match ($data['status']) {
   <div class="main-content p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
 
     <!-- HEADER -->
-    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
-      <div>
-        <h1 class="text-3xl font-bold text-slate-800 mb-2">Detail Reservasi</h1>
-        <a href="index.php" class="text-blue-600 hover:underline text-sm">
-          ← Kembali ke daftar
-        </a>
-      </div>
-
-      <!-- BUTTON EXPORT PDF -->
-      <a
-        href="<?php echo $baseUrl; ?>/pegawai/export/single-export-pdf.php?id=<?= $data['id']; ?>"
-        target="_blank"
-        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-           bg-red-600 text-white text-sm font-semibold
-           hover:bg-red-700 transition shadow">
-
-        <!-- ICON -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-          viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 4v12m0 0l-3-3m3 3l3-3M6 20h12" />
-        </svg>
-
-        Export PDF
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-slate-800 mb-2">Detail Reservasi</h1>
+      <a href="index.php" class="text-blue-600 hover:underline text-sm">
+        ← Kembali ke daftar
       </a>
-
     </div>
-
 
     <!-- CARD -->
     <div class="bg-white rounded-2xl shadow p-6 space-y-8">
@@ -246,6 +223,20 @@ $statusClass = match ($data['status']) {
           </div>
         </div>
       <?php endif; ?>
+
+
+      <div class="flex gap-4 justify-end">
+        <?php if ($data['status'] === 'Menunggu Kepala Bagian'): ?>
+          <a href="final-approve/approve.php?id=<?= $data['id']; ?>"
+            class="block border border-emerald-600 rounded-xl text-left px-4 py-2 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all duration-300 ease-in-out">
+            Setujui
+          </a>
+          <a href="final-approve/reject.php?id=<?= $data['id']; ?>"
+            class="block text-left rounded-xl bg-red-600 border border-red-600 px-4 py-2 text-white rounded-b-xl hover:bg-white hover:text-red-600 hover:border-red-600 transition-all duration-300 ease-in-out">
+            Tolak
+          </a>
+        <?php endif; ?>
+      </div>
 
     </div>
   </div>

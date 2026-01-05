@@ -1,19 +1,27 @@
 <?php
 session_start();
 include '../../config/koneksi.php';
+include '../../includes/notification-helper.php';
 
-if ($_SESSION['role'] !== 'kepala_bagian') {
+/* =====================
+   AUTH
+===================== */
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kepala_bagian') {
   header("Location: ../../index.php");
   exit;
 }
 
-$id = (int)$_GET['id'];
+$id = (int)($_GET['id'] ?? 0);
+$kabag_id = $_SESSION['id_user'] ?? 0;
 
 /* =====================
    DATA RESERVASI
 ===================== */
 $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
-  SELECT r.*, u.nama, ru.nama_ruangan
+  SELECT 
+    r.*,
+    u.nama AS nama_pemohon,
+    ru.nama_ruangan
   FROM reservasi r
   JOIN users u ON r.user_id = u.id
   JOIN ruangan ru ON r.ruangan_id = ru.id
@@ -24,22 +32,63 @@ if (!$data) {
   die('Data tidak ditemukan');
 }
 
+/* =====================
+   SUBMIT
+===================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $alasan = mysqli_real_escape_string($koneksi, $_POST['alasan']);
-  $kabag_id = $_SESSION['id_user'];
 
+  $alasan = mysqli_real_escape_string($koneksi, $_POST['alasan']);
+
+  // update reservasi
   mysqli_query($koneksi, "
     UPDATE reservasi SET
-      status='Ditolak',
-      alasan_tolak='$alasan',
-      kabag_id=$kabag_id
-    WHERE id=$id
+      status = 'Ditolak',
+      alasan_tolak = '$alasan',
+      kabag_id = $kabag_id
+    WHERE id = $id
   ");
+
+  /* =====================
+     NOTIFIKASI
+  ===================== */
+
+  // 1. NOTIFIKASI KE PEGAWAI (PEMOHON)
+  mysqli_query($koneksi, "
+    INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
+    VALUES (
+      {$data['user_id']},
+      $id,
+      'Reservasi Ditolak',
+      'Reservasi ruangan {$data['nama_ruangan']} pada tanggal " . date('d F Y', strtotime($data['tanggal'])) . " ditolak. Alasan: $alasan'
+    )
+  ");
+
+  // 2. NOTIFIKASI KE ADMIN
+  kirimNotifikasiByRole(
+    $koneksi,
+    ['admin'],
+    'Reservasi Ditolak oleh Kepala Bagian',
+    "Reservasi ruangan {$data['nama_ruangan']} telah ditolak oleh Kepala Bagian.",
+    $id
+  );
+
+  // 3. NOTIFIKASI KE KEPALA BAGIAN 
+  mysqli_query($koneksi, "
+    INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
+    VALUES (
+      $kabag_id,
+      $id,
+      'Reservasi Ditolak',
+      'Anda telah menolak reservasi ini.'
+    )
+  ");
+
 
   header("Location: index.php?success=reject");
   exit;
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">
@@ -96,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <i class="fas fa-info-circle text-red-600 mr-2"></i>Detail Reservasi
         </h2>
         <div class="space-y-2 text-sm">
-          <p><span class="font-medium text-gray-700">Pemohon:</span> <span class="text-gray-900"><?= htmlspecialchars($data['nama']) ?></span></p>
+          <p><span class="font-medium text-gray-700">Pemohon:</span> <span class="text-gray-900"><?= htmlspecialchars($data['nama_pemohon']) ?></span></p>
           <p><span class="font-medium text-gray-700">Ruangan:</span> <span class="text-gray-900"><?= htmlspecialchars($data['nama_ruangan']) ?></span></p>
           <p><span class="font-medium text-gray-700">Tanggal:</span> <span class="text-gray-900"><?= date('d F Y', strtotime($data['tanggal'])) ?></span></p>
           <p><span class="font-medium text-gray-700">Waktu:</span> <span class="text-gray-900"><?= htmlspecialchars($data['jam_mulai']) ?> - <?= htmlspecialchars($data['jam_selesai']) ?></span></p>

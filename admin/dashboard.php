@@ -5,6 +5,44 @@
 session_start();
 include '../config/koneksi.php';
 
+/* ================================
+   AUTH ADMIN
+================================ */
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+  header("Location: ../index.php");
+  exit;
+}
+
+$admin_id = $_SESSION['id_user'];
+
+/* ================================
+   NOTIFIKASI ADMIN
+================================ */
+$notif_q = mysqli_query($koneksi, "
+  SELECT 
+    n.id,
+    n.judul,
+    n.pesan,
+    n.is_read,
+    n.created_at,
+    n.reservasi_id
+  FROM notifikasi n
+  WHERE n.user_id = $admin_id
+  ORDER BY n.created_at DESC
+  LIMIT 10
+");
+
+$notifikasi = [];
+$notif_unread = 0;
+
+while ($n = mysqli_fetch_assoc($notif_q)) {
+  $notifikasi[] = $n;
+  if ($n['is_read'] == 0) {
+    $notif_unread++;
+  }
+}
+
+
 // ================================
 // DATA RUANGAN (FILTER)
 // ================================
@@ -255,11 +293,52 @@ while ($row = mysqli_fetch_assoc($result)) {
   <div class="main-content p-4 sm:p-6 lg:p-8">
     <div class="card">
       <!-- HEADER -->
-      <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">
-          <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Admin
-        </h1>
-        <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
+      <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow mb-6 flex items-start justify-between">
+        <div class="">
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">
+            <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Admin
+          </h1>
+          <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
+        </div>
+        <!-- NOTIFIKASI -->
+        <div class="relative">
+          <button id="notifBtn" class="relative text-gray-600 hover:text-blue-600">
+            <i class="fas fa-bell text-2xl"></i>
+
+            <?php if ($notif_unread > 0): ?>
+              <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                <?= $notif_unread ?>
+              </span>
+            <?php endif; ?>
+          </button>
+
+          <!-- DROPDOWN -->
+          <div id="notifDropdown"
+            class="hidden absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-xl border overflow-hidden z-50">
+
+            <div class="px-4 py-3 font-semibold text-gray-700 border-b">
+              Notifikasi
+            </div>
+
+            <?php if (empty($notifikasi)): ?>
+              <div class="p-4 text-sm text-gray-500 text-center">
+                Tidak ada notifikasi
+              </div>
+            <?php else: ?>
+              <?php foreach ($notifikasi as $n): ?>
+                <a href="reservation/detail.php?id=<?= $n['reservasi_id'] ?>"
+                  class="notif-item block px-4 py-3 text-sm border-b hover:bg-gray-50 <?= $n['is_read'] ? 'text-gray-500' : 'font-semibold text-gray-800' ?>"
+                  data-id="<?= $n['id'] ?>">
+                  <div><?= htmlspecialchars($n['judul']) ?></div>
+                  <div class="text-xs text-gray-500 mt-1">
+                    <?= htmlspecialchars($n['pesan']) ?>
+                  </div>
+                </a>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        </div>
+
       </div>
 
       <!-- FILTER -->
@@ -372,6 +451,54 @@ while ($row = mysqli_fetch_assoc($result)) {
       });
     });
   </script>
+
+  <script>
+    const notifBtn = document.getElementById('notifBtn');
+    const notifDropdown = document.getElementById('notifDropdown');
+
+    notifBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      notifDropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', function() {
+      notifDropdown.classList.add('hidden');
+    });
+  </script>
+  <script>
+    document.querySelectorAll('.notif-item').forEach(item => {
+      item.addEventListener('click', function() {
+
+        const notifId = this.dataset.id;
+
+        // AJAX mark as read
+        fetch('notification-read.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: 'id=' + notifId
+        });
+
+        // UI realtime
+        this.classList.remove('font-semibold', 'text-gray-800');
+        this.classList.add('text-gray-500');
+
+        const badge = document.querySelector('#notifBtn span');
+        if (badge) {
+          let count = parseInt(badge.innerText);
+          count--;
+
+          if (count <= 0) {
+            badge.remove();
+          } else {
+            badge.innerText = count;
+          }
+        }
+      });
+    });
+  </script>
+
 
 </body>
 
