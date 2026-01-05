@@ -154,12 +154,33 @@ function active($path, $currentUri)
       <a href="<?= $baseUrl ?>/kepala-bagian/final-approve/index.php"
         class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/kepala-bagian/final-approve', $currentUri); ?>">
 
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <!-- Check Badge -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+          viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            d="M9 12l2 2 4-4" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
         </svg>
 
         <span>Approve Reservasi</span>
+      </a>
+
+      <a href="<?= $baseUrl ?>/kepala-bagian/user-management/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/kepala-bagian/user-management', $currentUri); ?>">
+
+        <!-- Users -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a4 4 0 00-4-4h-1" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 20H4v-2a4 4 0 014-4h1" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
+        </svg>
+
+        <span>User Management</span>
       </a>
 
     <?php endif; ?>
