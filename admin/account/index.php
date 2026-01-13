@@ -66,10 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <title>Akun Saya | Admin</title>
 
   <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- <script src="https://cdn.tailwindcss.com"></script> -->
 
-  <!-- Icon -->
-  <link href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css" rel="stylesheet">
+  <?php include __DIR__ . '/../../includes/module.php'; ?>
 </head>
 
 <body class="bg-gradient-to-br from-slate-100 via-white to-slate-100 min-h-screen">

@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'config/koneksi.php';
+include 'includes/base-url.php';
 
 if (isset($_POST['login'])) {
 
@@ -60,8 +61,7 @@ if (isset($_POST['login'])) {
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Icons -->
-  <link href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css" rel="stylesheet">
+  <?php include __DIR__ . '/includes/module.php'; ?>
 </head>
 
 <body class="min-h-screen flex items-center justify-center

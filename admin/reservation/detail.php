@@ -84,7 +84,7 @@ $statusClass = match ($data['status']) {
 <head>
   <meta charset="UTF-8">
   <title>Detail Reservasi | Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <?php include __DIR__ . '/../../includes/module.php'; ?>
 </head>
 
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">

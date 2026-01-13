@@ -137,8 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Setujui Reservasi</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <?php include __DIR__ . '/../../includes/module.php'; ?>
   <style>
     .card-shadow {
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -197,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <!-- HEADER -->
       <div class="text-center">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">
-          <i class="fas fa-check-circle text-green-600 mr-2"></i>Setujui Reservasi
+          <i class="ph ph-check-circle text-green-600 mr-2 text-xl"></i>Setujui Reservasi
         </h1>
         <p class="text-gray-600">Konfirmasi persetujuan reservasi dengan tanda tangan Anda.</p>
       </div>
@@ -205,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <!-- INFO RESERVASI -->
       <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-l-4 border-blue-500">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">
-          <i class="fas fa-info-circle text-blue-600 mr-2"></i>Detail Reservasi
+          <i class="ph ph-info text-blue-600 mr-2 text-xl"></i>Detail Reservasi
         </h2>
         <div class="space-y-2 text-sm">
           <p><span class="font-medium text-gray-700">Pemohon:</span> <span class="text-gray-900"><?= htmlspecialchars($data['nama_pemohon']) ?></span></p>
@@ -221,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- METODE TTD -->
         <div>
           <label class="font-semibold text-gray-800 block mb-4 text-lg">
-            <i class="fas fa-signature text-indigo-600 mr-2"></i>Metode Tanda Tangan
+            <i class="ph ph-signature text-indigo-600 mr-2 text-xl"></i>Metode Tanda Tangan
           </label>
           <div class="flex flex-col sm:flex-row gap-6">
             <label class="flex items-center gap-3 cursor-pointer p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
@@ -244,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- UPLOAD BOX -->
         <div id="uploadBox" class="space-y-4">
           <label class="block text-sm font-medium text-gray-700">
-            <i class="fas fa-upload text-gray-600 mr-2"></i>Pilih File Tanda Tangan
+            <i class="ph ph-upload text-gray-600 mr-2 text-xl"></i>Pilih File Tanda Tangan
           </label>
           <input type="file" name="ttd_file" accept="image/*"
             class="w-full border-2 border-dashed border-gray-300 rounded-xl px-4 py-6 text-center hover:border-blue-400 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -254,7 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- CANVAS BOX -->
         <div id="canvasBox" class="hidden space-y-4">
           <label class="block text-sm font-medium text-gray-700">
-            <i class="fas fa-pen text-gray-600 mr-2"></i>Tanda Tangan Langsung
+            <i class="ph ph-pen text-gray-600 mr-2 text-xl"></i>Tanda Tangan Langsung
           </label>
           <p class="text-sm text-gray-600 mb-2">Gambar tanda tangan Anda di area bawah ini:</p>
 
@@ -264,7 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           <button type="button" id="clear"
             class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition btn-hover">
-            <i class="fas fa-trash mr-2"></i>Hapus TTD
+            <i class="ph ph-trash mr-2 text-xl"></i>Hapus TTD
           </button>
 
           <input type="hidden" name="ttd_canvas" id="ttd_canvas">
@@ -273,10 +272,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- BUTTONS -->
         <div class="flex flex-col sm:flex-row gap-4">
           <button type="submit" class="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-semibold btn-hover shadow-md">
-            <i class="fas fa-check mr-2"></i>Setujui Reservasi
+            <i class="ph ph-check mr-2 text-xl"></i>Setujui Reservasi
           </button>
           <a href="index.php" class="flex-1 bg-gray-300 text-gray-700 text-center py-3 rounded-xl font-semibold hover:bg-gray-400 transition btn-hover">
-            <i class="fas fa-times mr-2"></i>Batal
+            <i class="ph ph-x mr-2 text-xl"></i>>Batal
           </a>
         </div>
 

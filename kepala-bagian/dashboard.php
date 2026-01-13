@@ -183,9 +183,7 @@ $judulTrend = $bulan
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Kepala Bagian</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <?php include __DIR__ . '/../includes/module.php'; ?>
   <style>
     .chart-container {
       transition: transform 0.2s ease-in-out;
@@ -219,7 +217,7 @@ $judulTrend = $bulan
     <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow flex justify-between items-center">
       <div>
         <h1 class="text-3xl font-bold text-gray-800 mb-2">
-          <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Kepala Bagian
+          <i class="ph ph-chart-line text-blue-600 mr-2"></i></i>Dashboard Kepala Bagian
         </h1>
         <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
       </div>
@@ -227,7 +225,7 @@ $judulTrend = $bulan
       <!-- NOTIFIKASI -->
       <div class="relative">
         <button id="notifBtn" class="relative text-gray-600 hover:text-blue-600">
-          <i class="fas fa-bell text-2xl"></i>
+          <i class="ph ph-bell text-2xl"></i>
 
           <?php if ($notif_unread > 0): ?>
             <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -270,7 +268,7 @@ $judulTrend = $bulan
     <!-- FILTER FORM -->
     <form method="GET" class="bg-white p-6 rounded-2xl shadow-lg card-shadow flex flex-wrap gap-4 items-center w-fit">
       <div class="flex items-center gap-2">
-        <i class="fas fa-calendar-alt text-gray-600"></i>
+        <i class="ph ph-calendar text-gray-600"></i>
         <label class="font-medium text-gray-700">Tahun:</label>
         <select name="tahun" class="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
           <?php for ($t = date('Y') - 2; $t <= date('Y') + 1; $t++): ?>
@@ -280,7 +278,6 @@ $judulTrend = $bulan
       </div>
 
       <div class="flex items-center gap-2">
-        <i class="fas fa-calendar-day text-gray-600"></i>
         <label class="font-medium text-gray-700">Bulan:</label>
         <select name="bulan" class="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
           <option value="">Semua Bulan</option>
@@ -294,7 +291,7 @@ $judulTrend = $bulan
       </div>
 
       <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition duration-300 shadow-md">
-        <i class="fas fa-search mr-2"></i>Terapkan
+        <i class="ph ph-magnifying-glass mr-2"></i>Terapkan
       </button>
     </form>
 

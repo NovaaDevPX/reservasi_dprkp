@@ -35,10 +35,12 @@ if (!$query) {
   <title>Data Fasilitas | Admin</title>
 
   <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- <script src="https://cdn.tailwindcss.com"></script> -->
 
   <!-- Alpine.js -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script> -->
+
+  <?php include __DIR__ . '/../../includes/module.php'; ?>
 
   <!-- Custom Styles for Enhanced UI -->
   <style>

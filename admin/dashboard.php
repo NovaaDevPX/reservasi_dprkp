@@ -117,10 +117,9 @@ while ($row = mysqli_fetch_assoc($result)) {
 <head>
   <meta charset="UTF-8">
   <title>Kalender Reservasi</title>
+  <?php include __DIR__ . '/../includes/module.php'; ?>
 
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
   <style>
     :root {
@@ -296,14 +295,15 @@ while ($row = mysqli_fetch_assoc($result)) {
       <div class="bg-white p-6 rounded-2xl shadow-lg card-shadow mb-6 flex items-start justify-between">
         <div class="">
           <h1 class="text-3xl font-bold text-gray-800 mb-2">
-            <i class="fas fa-chart-line text-blue-600 mr-2"></i>Dashboard Admin
+            <i class="ph ph-chart-line text-blue-600 mr-2 text-3xl">
+            </i>Dashboard Admin
           </h1>
           <p class="text-gray-600">Pantau tren reservasi, ruangan, status, dan fasilitas dengan mudah.</p>
         </div>
         <!-- NOTIFIKASI -->
         <div class="relative">
           <button id="notifBtn" class="relative text-gray-600 hover:text-blue-600">
-            <i class="fas fa-bell text-2xl"></i>
+            <i class="ph ph-bell text-2xl"></i>
 
             <?php if ($notif_unread > 0): ?>
               <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -360,10 +360,9 @@ while ($row = mysqli_fetch_assoc($result)) {
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    window.addEventListener('load', function() {
       const calendarEl = document.getElementById('calendar');
       const filterRuangan = document.getElementById('filterRuangan');
       let tooltip;

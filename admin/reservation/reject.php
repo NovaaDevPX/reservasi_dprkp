@@ -92,8 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tolak Reservasi</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <?php include __DIR__ . '/../../includes/module.php'; ?>
   <style>
     .card-shadow {
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <!-- HEADER -->
       <div class="text-center">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">
-          <i class="fas fa-times-circle text-red-600 mr-2"></i>Tolak Reservasi
+          <i class="ph ph-x-circle text-red-600 mr-2 text-xl"></i>Tolak Reservasi
         </h1>
         <p class="text-gray-600">Berikan alasan penolakan untuk reservasi ini.</p>
       </div>
@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <!-- INFO RESERVASI -->
       <div class="bg-gradient-to-r from-red-50 to-pink-50 p-6 rounded-xl border-l-4 border-red-500">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">
-          <i class="fas fa-info-circle text-red-600 mr-2"></i>Detail Reservasi
+          <i class="ph ph-info text-red-600 mr-2 text-xl"></i>Detail Reservasi
         </h2>
         <div class="space-y-2 text-sm">
           <p><span class="font-medium text-gray-700">Pemohon:</span> <?= htmlspecialchars($data['nama_pemohon']) ?></p>
@@ -149,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- ALASAN -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            <i class="fas fa-comment-dots text-red-600 mr-2"></i>Alasan Penolakan
+            <i class="ph ph-x-circle text-red-600 mr-2 text-xl"></i>Alasan Penolakan
           </label>
           <textarea name="alasan" required
             class="w-full border-2 border-gray-300 rounded-xl p-4 h-32 resize-none textarea-focus focus:outline-none"
@@ -161,11 +161,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="flex flex-col sm:flex-row gap-4">
           <button type="submit"
             class="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-semibold btn-hover">
-            <i class="fas fa-times mr-2"></i>Tolak Reservasi
+            <i class="ph ph-x mr-2 text-xl"></i>Tolak Reservasi
           </button>
           <a href="index.php"
             class="flex-1 bg-gray-300 text-gray-700 text-center py-3 rounded-xl font-semibold hover:bg-gray-400 btn-hover">
-            <i class="fas fa-arrow-left mr-2"></i>Kembali
+            <i class="ph ph-arrow-left mr-2 text-xl"></i>Kembali
           </a>
         </div>
 

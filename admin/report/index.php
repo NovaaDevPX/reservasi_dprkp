@@ -92,11 +92,7 @@ $dibatalkan = countStatus($koneksi, 'Dibatalkan');
   <title>Laporan Reservasi | Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Alpine -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <?php include __DIR__ . '/../../includes/module.php'; ?>
 
   <style>
     .btn-primary {
