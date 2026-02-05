@@ -37,7 +37,7 @@ function active($path, $currentUri)
 <!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<aside class="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-900 to-slate-950 text-white shadow-xl z-50">
+<aside class="fixed top-0 left-0 z-50 w-64 h-screen text-white shadow-xl bg-gradient-to-b from-slate-900 to-slate-950">
 
   <!-- ================= HEADER ================= -->
   <div class="px-6 py-6 border-b border-white/10">
@@ -48,7 +48,7 @@ function active($path, $currentUri)
   </div>
 
   <!-- ================= MENU ================= -->
-  <nav class="px-4 py-6 space-y-2">
+  <nav class="px-4 py-6 space-y-2 overflow-y-auto">
 
     <!-- DASHBOARD -->
     <a href="<?= $baseUrl ?>/<?= $rolePath ?>/dashboard.php"
@@ -152,6 +152,23 @@ function active($path, $currentUri)
         <span>Laporan</span>
       </a>
 
+      <a href="<?= $baseUrl ?>/admin/user-management/index.php"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/user-management', $currentUri); ?>">
+
+        <!-- Users -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a4 4 0 00-4-4h-1" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 20H4v-2a4 4 0 014-4h1" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
+        </svg>
+
+        <span>User Management</span>
+      </a>
+
       <a href="<?= $baseUrl ?>/admin/account/index.php"
         class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/admin/account', $currentUri); ?>">
 
@@ -200,31 +217,14 @@ function active($path, $currentUri)
         <span>Approve Reservasi</span>
       </a>
 
-      <a href="<?= $baseUrl ?>/kepala-bagian/user-management/index.php"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= active('/kepala-bagian/user-management', $currentUri); ?>">
-
-        <!-- Users -->
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-          viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M17 20h5v-2a4 4 0 00-4-4h-1" />
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M9 20H4v-2a4 4 0 014-4h1" />
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
-        </svg>
-
-        <span>User Management</span>
-      </a>
-
     <?php endif; ?>
 
   </nav>
 
   <!-- ================= FOOTER ================= -->
-  <div class="absolute bottom-0 w-full px-4 pb-6">
+  <div class="absolute bottom-0 w-full px-4 pb-6 ">
     <div class="flex items-center gap-3 px-4 py-3 mb-4 bg-slate-800 rounded-xl">
-      <div class="h-9 w-9 flex items-center justify-center rounded-full bg-blue-600 font-bold">
+      <div class="flex items-center justify-center font-bold bg-blue-600 rounded-full h-9 w-9">
         <?= strtoupper(substr($nama, 0, 1)); ?>
       </div>
       <div>

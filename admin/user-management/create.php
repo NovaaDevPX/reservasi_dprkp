@@ -5,7 +5,7 @@ include '../../config/koneksi.php';
 /* =====================
    AUTH KEPALA BAGIAN
 ===================== */
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kepala_bagian') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   header("Location: ../../index.php");
   exit;
 }
@@ -77,15 +77,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 </head>
 
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
 
   <?php include '../../includes/layouts/sidebar.php'; ?>
 
-  <div class="main-content p-4 sm:p-6 lg:p-8 max-w-full mx-auto">
+  <div class="max-w-full p-4 mx-auto main-content sm:p-6 lg:p-8">
 
     <!-- HEADER -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-slate-800 mb-1">
+      <h1 class="mb-1 text-2xl font-bold text-slate-800">
         Tambah User
       </h1>
       <p class="text-slate-600">
@@ -95,22 +95,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- ALERT -->
     <?php if ($error): ?>
-      <div class="mb-4 px-4 py-3 rounded-xl bg-red-100 text-red-700">
+      <div class="px-4 py-3 mb-4 text-red-700 bg-red-100 rounded-xl">
         <?= $error; ?>
       </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
-      <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-100 text-emerald-700">
+      <div class="px-4 py-3 mb-4 rounded-xl bg-emerald-100 text-emerald-700">
         <?= $success; ?>
       </div>
     <?php endif; ?>
 
     <!-- FORM -->
-    <form method="POST" class="bg-white rounded-2xl shadow p-6 space-y-5">
+    <form method="POST" class="p-6 space-y-5 bg-white shadow rounded-2xl">
 
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
+        <label class="block mb-1 text-sm font-medium text-slate-700">
           NIP
         </label>
         <input
@@ -118,11 +118,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           name="nip"
           required
           value="<?= htmlspecialchars($_POST['nip'] ?? ''); ?>"
-          class="w-full border rounded-xl px-4 py-2 focus:ring focus:ring-blue-200">
+          class="w-full px-4 py-2 border rounded-xl focus:ring focus:ring-blue-200">
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
+        <label class="block mb-1 text-sm font-medium text-slate-700">
           Nama
         </label>
         <input
@@ -130,17 +130,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           name="nama"
           required
           value="<?= htmlspecialchars($_POST['nama'] ?? ''); ?>"
-          class="w-full border rounded-xl px-4 py-2 focus:ring focus:ring-blue-200">
+          class="w-full px-4 py-2 border rounded-xl focus:ring focus:ring-blue-200">
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
+        <label class="block mb-1 text-sm font-medium text-slate-700">
           Role
         </label>
         <select
           name="role"
           required
-          class="w-full border rounded-xl px-4 py-2 focus:ring focus:ring-blue-200">
+          class="w-full px-4 py-2 border rounded-xl focus:ring focus:ring-blue-200">
 
           <option value="">Pilih Role</option>
           <option value="pegawai" <?= ($_POST['role'] ?? '') === 'pegawai' ? 'selected' : ''; ?>>
@@ -157,11 +157,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <?php if ($newPassword): ?>
         <!-- PASSWORD BARU -->
-        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-          <p class="text-sm text-yellow-700 mb-1">
+        <div class="p-4 border border-yellow-200 bg-yellow-50 rounded-xl">
+          <p class="mb-1 text-sm text-yellow-700">
             Password Awal (simpan & berikan ke user):
           </p>
-          <p class="text-xl font-mono font-bold tracking-widest">
+          <p class="font-mono text-xl font-bold tracking-widest">
             <?= $newPassword; ?>
           </p>
         </div>
@@ -175,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
 
         <button
-          class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
+          class="px-5 py-2 text-white bg-blue-600 rounded-xl hover:bg-blue-700">
           Simpan User
         </button>
       </div>

@@ -5,7 +5,7 @@ include '../../config/koneksi.php';
 /* =====================
    AUTH KEPALA BAGIAN
 ===================== */
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kepala_bagian') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   header("Location: ../../index.php");
   exit;
 }

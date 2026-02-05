@@ -1,6 +1,6 @@
 <?php
 
-include 'base-url.php'
+include 'base-url.php';
 
 /**
  * Module Assets Loader

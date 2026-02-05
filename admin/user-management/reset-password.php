@@ -5,7 +5,7 @@ include '../../config/koneksi.php';
 /* =====================
    AUTH KEPALA BAGIAN
 ===================== */
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kepala_bagian') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   header("Location: ../../index.php");
   exit;
 }
@@ -115,45 +115,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen font-sans">
+<body class="min-h-screen font-sans bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
 
   <?php include '../../includes/layouts/sidebar.php'; ?>
 
-  <div class="main-content p-4 sm:p-6 lg:p-8 max-w-full mx-auto fade-in">
+  <div class="max-w-full p-4 mx-auto main-content sm:p-6 lg:p-8 fade-in">
 
     <!-- HEADER -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">Reset Password</h1>
-      <p class="text-gray-600 text-lg">
+      <h1 class="mb-2 text-3xl font-bold text-gray-800">Reset Password</h1>
+      <p class="text-lg text-gray-600">
         Reset password user dan generate password baru secara otomatis.
       </p>
     </div>
 
     <!-- ALERT ERROR -->
     <?php if ($error): ?>
-      <div class="mb-6 px-6 py-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3 shadow-sm">
-        <i class="ph ph-warning-circle text-red-500 text-2xl"></i>
+      <div class="flex items-center gap-3 px-6 py-4 mb-6 text-red-700 border border-red-200 shadow-sm rounded-2xl bg-red-50">
+        <i class="text-2xl text-red-500 ph ph-warning-circle"></i>
         <?= $error; ?>
       </div>
     <?php endif; ?>
 
     <!-- ALERT SUCCESS -->
     <?php if ($success): ?>
-      <div class="mb-6 px-6 py-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-3 shadow-sm">
-        <i class="ph ph-check-circle text-emerald-500 text-2xl"></i>
+      <div class="flex items-center gap-3 px-6 py-4 mb-6 border shadow-sm rounded-2xl bg-emerald-50 border-emerald-200 text-emerald-700">
+        <i class="text-2xl ph ph-check-circle text-emerald-500"></i>
         <?= $success; ?>
       </div>
     <?php endif; ?>
 
     <!-- CARD -->
-    <div class="bg-white rounded-3xl shadow-xl p-8 space-y-6 hover-lift">
+    <div class="p-8 space-y-6 bg-white shadow-xl rounded-3xl hover-lift">
 
       <!-- USER INFO -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <i class="ph ph-identification-card text-blue-600 text-xl"></i>
+          <div class="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
+            <i class="text-xl text-blue-600 ph ph-identification-card"></i>
           </div>
           <div>
             <p class="text-sm text-gray-500">NIP</p>
@@ -162,8 +162,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-            <i class="ph ph-user text-green-600 text-xl"></i>
+          <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full">
+            <i class="text-xl text-green-600 ph ph-user"></i>
           </div>
           <div>
             <p class="text-sm text-gray-500">Nama</p>
@@ -172,8 +172,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-            <i class="ph ph-file-text text-purple-600 text-xl"></i>
+          <div class="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full">
+            <i class="text-xl text-purple-600 ph ph-file-text"></i>
           </div>
           <div>
             <p class="text-sm text-gray-500">Role</p>
@@ -187,21 +187,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <!-- PASSWORD BARU -->
       <?php if ($newPassword): ?>
-        <div class="mt-6 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl">
+        <div class="p-6 mt-6 border border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl">
           <div class="flex items-center gap-3 mb-3">
-            <i class="ph ph-lock-key text-yellow-600 text-2xl"></i>
+            <i class="text-2xl text-yellow-600 ph ph-lock-key"></i>
             <p class="text-sm font-medium text-yellow-700">
               Password Baru (simpan & berikan ke user)
             </p>
           </div>
 
-          <div class="flex items-center justify-between bg-white p-4 rounded-xl border">
-            <p class="text-2xl font-mono font-bold tracking-widest text-gray-800">
+          <div class="flex items-center justify-between p-4 bg-white border rounded-xl">
+            <p class="font-mono text-2xl font-bold tracking-widest text-gray-800">
               <?= $newPassword; ?>
             </p>
             <button
               onclick="navigator.clipboard.writeText('<?= $newPassword; ?>'); alert('Password disalin!');"
-              class="ml-4 px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm transition">
+              class="px-3 py-1 ml-4 text-sm text-white transition bg-yellow-500 rounded-lg hover:bg-yellow-600">
               Salin
             </button>
           </div>
@@ -212,15 +212,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <form method="POST" class="flex justify-end gap-4 pt-6 border-t border-gray-100">
 
         <a href="index.php"
-          class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium transition">
-          <i class="ph ph-arrow-left text-xl"></i>
+          class="flex items-center gap-2 px-6 py-3 font-medium text-gray-700 transition bg-gray-200 rounded-xl hover:bg-gray-300">
+          <i class="text-xl ph ph-arrow-left"></i>
           Kembali
         </a>
 
         <button
           onclick="return confirm('Yakin reset password user ini?')"
-          class="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium transition">
-          <i class="ph ph-arrow-counter-clockwise text-xl"></i>
+          class="flex items-center gap-2 px-6 py-3 font-medium text-white transition bg-red-600 rounded-xl hover:bg-red-700">
+          <i class="text-xl ph ph-arrow-counter-clockwise"></i>
           Reset Password
         </button>
 
