@@ -83,44 +83,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $keperluan   = trim($_POST['keperluan']);
   $mode        = $_POST['mode_fasilitas'];
 
-  /* VALIDASI */
-  $r = mysqli_fetch_assoc(mysqli_query(
-    $koneksi,
-    "SELECT kapasitas FROM ruangan WHERE id=$ruangan_id"
-  ));
-
-  if ($jumlah > $r['kapasitas']) {
-    $error = "Jumlah peserta melebihi kapasitas ruangan ({$r['kapasitas']} orang).";
+  /* =====================
+     VALIDASI SURAT
+  ===================== */
+  if (
+    !isset($_FILES['surat_pengantar']) ||
+    $_FILES['surat_pengantar']['error'] !== 0
+  ) {
+    $error = "Surat pengantar wajib diunggah.";
   }
 
-  if ($jam_mulai >= $jam_selesai) {
-    $error = "Jam selesai harus lebih besar dari jam mulai.";
+  if (!$error) {
+    $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+    $maxSize = 2 * 1024 * 1024;
+
+    $file     = $_FILES['surat_pengantar'];
+    $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $size     = $file['size'];
+
+    if (!in_array($ext, $allowed)) {
+      $error = "Format surat harus PDF, JPG, atau PNG.";
+    }
+
+    if ($size > $maxSize) {
+      $error = "Ukuran surat maksimal 2MB.";
+    }
   }
 
-  $cek = mysqli_query($koneksi, "
-    SELECT id FROM reservasi
-    WHERE ruangan_id=$ruangan_id
-      AND tanggal='$tanggal'
-      AND status!='Ditolak'
-      AND ('$jam_mulai' < jam_selesai AND '$jam_selesai' > jam_mulai)
-  ");
+  /* =====================
+     VALIDASI LOGIC
+  ===================== */
+  if (!$error) {
+    $r = mysqli_fetch_assoc(mysqli_query(
+      $koneksi,
+      "SELECT kapasitas FROM ruangan WHERE id=$ruangan_id"
+    ));
 
-  if (mysqli_num_rows($cek) > 0) {
-    $error = "Ruangan sudah digunakan pada jam tersebut.";
+    if ($jumlah > $r['kapasitas']) {
+      $error = "Jumlah peserta melebihi kapasitas ruangan ({$r['kapasitas']} orang).";
+    }
+
+    if ($jam_mulai >= $jam_selesai) {
+      $error = "Jam selesai harus lebih besar dari jam mulai.";
+    }
+
+    $cek = mysqli_query($koneksi, "
+      SELECT id FROM reservasi
+      WHERE ruangan_id=$ruangan_id
+        AND tanggal='$tanggal'
+        AND status!='Ditolak'
+        AND ('$jam_mulai' < jam_selesai AND '$jam_selesai' > jam_mulai)
+    ");
+
+    if (mysqli_num_rows($cek) > 0) {
+      $error = "Ruangan sudah digunakan pada jam tersebut.";
+    }
   }
 
   if (!$error) {
     mysqli_begin_transaction($koneksi);
 
     try {
+
+      /* =====================
+         UPLOAD SURAT
+      ===================== */
+      $folder = '../../uploads/surat/';
+      if (!is_dir($folder)) {
+        mkdir($folder, 0777, true);
+      }
+
+      $namaFile = 'surat_' . time() . '_' . rand(100, 999) . '.' . $ext;
+      move_uploaded_file($file['tmp_name'], $folder . $namaFile);
+
       /* =====================
          INSERT RESERVASI
       ===================== */
       mysqli_query($koneksi, "
         INSERT INTO reservasi
-        (user_id, ruangan_id, tanggal, jam_mulai, jam_selesai, keperluan, jumlah_peserta)
+        (user_id, ruangan_id, tanggal, jam_mulai, jam_selesai, keperluan, jumlah_peserta, surat_pengantar)
         VALUES
-        ($user_id, $ruangan_id, '$tanggal', '$jam_mulai', '$jam_selesai', '$keperluan', $jumlah)
+        ($user_id, $ruangan_id, '$tanggal', '$jam_mulai', '$jam_selesai', '$keperluan', $jumlah, '$namaFile')
       ");
 
       $reservasi_id = mysqli_insert_id($koneksi);
@@ -152,10 +195,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $fid = (int)$fid;
           $qty = isset($_POST['qty'][$fid]) ? (int)$_POST['qty'][$fid] : 1;
 
-          if ($qty < 1) {
-            throw new Exception('Qty fasilitas tidak valid');
-          }
-
           mysqli_query($koneksi, "
             INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
             VALUES ($reservasi_id, $fid, $qty)
@@ -166,8 +205,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       /* =====================
          NOTIFIKASI
       ===================== */
-
-      // 1️⃣ Pegawai (pemohon)
       mysqli_query($koneksi, "
         INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
         VALUES (
@@ -178,21 +215,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )
       ");
 
-      // 2️⃣ Admin
       kirimNotifikasiByRole(
         $koneksi,
         ['admin'],
         'Reservasi Baru',
-        'Terdapat pengajuan reservasi baru yang menunggu persetujuan.',
+        'Terdapat pengajuan reservasi baru dengan surat pengantar.',
         $reservasi_id
       );
 
-      // 3️⃣ Kepala Bagian (info awal)
       kirimNotifikasiByRole(
         $koneksi,
         ['kepala_bagian'],
         'Reservasi Baru',
-        'Terdapat pengajuan reservasi baru dari pegawai.',
+        'Pengajuan reservasi baru telah diajukan.',
         $reservasi_id
       );
 
@@ -217,29 +252,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <?php include __DIR__ . '/../../includes/module.php'; ?>
 </head>
 
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
   <?php include '../../includes/layouts/sidebar.php'; ?>
 
-  <div class="main-content p-4 sm:p-6 lg:p-8">
+  <div class="p-4 main-content sm:p-6 lg:p-8">
     <!-- HEADER -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div class="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-800 mb-2">Ajukan Reservasi Sekarang !</h1>
+        <h1 class="mb-2 text-3xl font-bold text-slate-800">Ajukan Reservasi Sekarang !</h1>
         <p class="text-slate-600">
           Pilih ruangan, tentukan jadwal, dan lengkapi dengan fasilitas yang dibutuhkan dalam satu langkah mudah.
         </p>
       </div>
     </div>
-    <form method="POST" class="bg-white p-6 rounded-2xl space-y-6">
+    <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6 bg-white rounded-2xl">
 
       <?php if ($error): ?>
-        <div class="bg-red-100 text-red-700 p-3 rounded"><?= $error ?></div>
+        <div class="p-3 text-red-700 bg-red-100 rounded"><?= $error ?></div>
       <?php endif; ?>
 
       <!-- RUANGAN -->
       <div>
-        <label class="font-semibold block mb-1">Ruangan</label>
-        <select name="ruangan_id" id="ruangan" required class="w-full border rounded-xl px-4 py-2">
+        <label class="block mb-1 font-semibold">Ruangan</label>
+        <select name="ruangan_id" id="ruangan" required class="w-full px-4 py-2 border rounded-xl">
           <option value="">-- Pilih Ruangan --</option>
           <?php while ($r = mysqli_fetch_assoc($ruangan)): ?>
             <option value="<?= $r['id'] ?>">
@@ -251,25 +286,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <!-- TANGGAL -->
       <div>
-        <label class="font-semibold block mb-1">Tanggal</label>
-        <input type="date" name="tanggal" id="tanggal" required class="w-full border rounded-xl px-4 py-2">
+        <label class="block mb-1 font-semibold">Tanggal</label>
+        <input type="date" name="tanggal" id="tanggal" required class="w-full px-4 py-2 border rounded-xl">
       </div>
 
       <!-- JAM -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="font-semibold block mb-1">Jam Mulai</label>
-          <input type="time" name="jam_mulai" required class="w-full border rounded-xl px-4 py-2">
+          <label class="block mb-1 font-semibold">Jam Mulai</label>
+          <input type="time" name="jam_mulai" required class="w-full px-4 py-2 border rounded-xl">
         </div>
         <div>
-          <label class="font-semibold block mb-1">Jam Selesai</label>
-          <input type="time" name="jam_selesai" required class="w-full border rounded-xl px-4 py-2">
+          <label class="block mb-1 font-semibold">Jam Selesai</label>
+          <input type="time" name="jam_selesai" required class="w-full px-4 py-2 border rounded-xl">
         </div>
       </div>
 
       <!-- JADWAL -->
       <div>
-        <label class="font-semibold block mb-1">Ketersediaan Ruangan</label>
+        <label class="block mb-1 font-semibold">Ketersediaan Ruangan</label>
         <div id="jadwal" class="text-sm italic text-slate-600">
           Pilih ruangan & tanggal
         </div>
@@ -277,29 +312,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <!-- PESERTA -->
       <div>
-        <label class="font-semibold block mb-1">Jumlah Peserta</label>
-        <input type="number" name="jumlah_peserta" required class="w-full border rounded-xl px-4 py-2">
+        <label class="block mb-1 font-semibold">Jumlah Peserta</label>
+        <input type="number" name="jumlah_peserta" required class="w-full px-4 py-2 border rounded-xl">
       </div>
 
       <!-- KEPERLUAN -->
       <div>
-        <label class="font-semibold block mb-1">Keperluan</label>
-        <textarea name="keperluan" required class="w-full border rounded-xl px-4 py-3"></textarea>
+        <label class="block mb-1 font-semibold">Keperluan</label>
+        <textarea name="keperluan" required class="w-full px-4 py-3 border rounded-xl"></textarea>
       </div>
 
       <!-- MODE -->
       <div>
-        <label class="font-semibold block mb-2">Fasilitas</label>
+        <label class="block mb-2 font-semibold">Fasilitas</label>
         <select name="mode_fasilitas" onchange="toggleMode(this.value)"
-          class="w-full border rounded-xl px-4 py-2">
+          class="w-full px-4 py-2 border rounded-xl">
           <option value="default">Gunakan Fasilitas Default</option>
           <option value="custom">Pilih Fasilitas Custom</option>
         </select>
       </div>
 
       <!-- DEFAULT -->
-      <div id="defaultBox" class="bg-slate-50 border rounded-xl p-4">
-        <div class="font-semibold text-sm mb-2">Fasilitas Default Ruangan</div>
+      <div id="defaultBox" class="p-4 border bg-slate-50 rounded-xl">
+        <div class="mb-2 text-sm font-semibold">Fasilitas Default Ruangan</div>
         <div id="defaultList" class="flex flex-wrap gap-2 text-sm">
           Pilih ruangan terlebih dahulu
         </div>
@@ -307,7 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <!-- CUSTOM -->
       <div id="customBox" class="hidden">
-        <label class="font-semibold block mb-2">Fasilitas Custom</label>
+        <label class="block mb-2 font-semibold">Fasilitas Custom</label>
 
         <div class="relative mb-3">
           <input type="text" id="search" placeholder="Cari & pilih fasilitas..."
@@ -316,10 +351,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             class="w-full px-4 py-2 border rounded-xl">
 
           <div id="dropdown"
-            class="absolute z-20 mt-1 w-full bg-white border rounded-xl shadow max-h-48 overflow-y-auto hidden">
+            class="absolute z-20 hidden w-full mt-1 overflow-y-auto bg-white border shadow rounded-xl max-h-48">
             <?php mysqli_data_seek($fasilitas, 0);
             while ($f = mysqli_fetch_assoc($fasilitas)): ?>
-              <div class="facility-item px-4 py-2 hover:bg-slate-100 cursor-pointer"
+              <div class="px-4 py-2 cursor-pointer facility-item hover:bg-slate-100"
                 data-id="<?= $f['id'] ?>"
                 data-name="<?= htmlspecialchars($f['nama']) ?>"
                 onclick="addFacility(this)">
@@ -332,7 +367,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div id="customList" class="space-y-2"></div>
       </div>
 
-      <button class="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold">
+      <!-- SURAT PENGANTAR -->
+      <div>
+        <label class="block mb-1 font-semibold">
+          Surat Pengantar
+        </label>
+
+        <input
+          type="file"
+          name="surat_pengantar"
+          required
+          accept=".pdf,.jpg,.jpeg,.png"
+          class="w-full px-4 py-2 bg-white border rounded-xl">
+
+        <p class="mt-1 text-xs text-slate-500">
+          Format: PDF / JPG / PNG • Maksimal 2MB
+        </p>
+      </div>
+
+      <button class="px-6 py-2 font-semibold text-white bg-blue-600 rounded-xl">
         Ajukan Reservasi
       </button>
 
@@ -388,7 +441,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .then(data => {
           defaultList.innerHTML = data.length ?
             data.map(f =>
-              `<span class="px-3 py-1 bg-slate-200 rounded-full">
+              `<span class="px-3 py-1 rounded-full bg-slate-200">
               ${f.nama} (${f.qty})
             </span>`
             ).join('') :
@@ -445,7 +498,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       const qty = qtyMemory[id] ?? 1;
 
       customList.insertAdjacentHTML('beforeend', `
-    <div id="row-${id}" class="flex items-center gap-3 border rounded-xl p-3">
+    <div id="row-${id}" class="flex items-center gap-3 p-3 border rounded-xl">
       <input type="hidden" name="fasilitas[]" value="${id}">
       <div class="flex-1 font-medium">${name}</div>
 
@@ -454,11 +507,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              value="${qty}"
              min="1"
              onchange="rememberQty(${id}, this.value)"
-             class="w-20 border rounded px-2 py-1">
+             class="w-20 px-2 py-1 border rounded">
 
       <button type="button"
               onclick="removeFacility(${id})"
-              class="text-red-500 font-bold text-xl leading-none">
+              class="text-xl font-bold leading-none text-red-500">
         ×
       </button>
     </div>

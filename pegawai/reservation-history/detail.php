@@ -87,19 +87,19 @@ $statusClass = match ($data['status']) {
   <?php include __DIR__ . '/../../includes/module.php'; ?>
 </head>
 
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
 
   <?php include '../../includes/layouts/sidebar.php'; ?>
   <?php include '../../includes/layouts/notification.php'; ?>
 
-  <div class="main-content p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+  <div class="max-w-5xl p-4 mx-auto main-content sm:p-6 lg:p-8">
 
     <!-- HEADER -->
-    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
 
       <div>
-        <h1 class="text-3xl font-bold text-slate-800 mb-2">Detail Reservasi</h1>
-        <a href="index.php" class="text-blue-600 hover:underline text-sm">
+        <h1 class="mb-2 text-3xl font-bold text-slate-800">Detail Reservasi</h1>
+        <a href="index.php" class="text-sm text-blue-600 hover:underline">
           ← Kembali ke daftar
         </a>
       </div>
@@ -108,12 +108,10 @@ $statusClass = match ($data['status']) {
       <a
         href="<?php echo $baseUrl; ?>/pegawai/export/single-export-pdf.php?id=<?= $data['id']; ?>"
         target="_blank"
-        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-           bg-red-600 text-white text-sm font-semibold
-           hover:bg-red-700 transition shadow">
+        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white transition bg-red-600 shadow rounded-xl hover:bg-red-700">
 
         <!-- ICON -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
           viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 4v12m0 0l-3-3m3 3l3-3M6 20h12" />
@@ -125,10 +123,10 @@ $statusClass = match ($data['status']) {
     </div>
 
     <!-- CARD -->
-    <div class="bg-white rounded-2xl shadow p-6 space-y-8">
+    <div class="p-6 space-y-8 bg-white shadow rounded-2xl">
 
       <!-- INFO UTAMA -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
         <div>
           <p class="text-sm text-slate-500">Pemohon</p>
@@ -138,9 +136,27 @@ $statusClass = match ($data['status']) {
 
         <div>
           <p class="text-sm text-slate-500">Status</p>
-          <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold <?= $statusClass; ?>">
-            <?= $data['status']; ?>
-          </span>
+
+          <div class="flex items-center gap-3 mt-1">
+            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold <?= $statusClass; ?>">
+              <?= $data['status']; ?>
+            </span>
+
+            <?php if ($data['status'] == 'Menunggu Kepala Bagian' || $data['status'] == 'Menunggu Admin'): ?>
+              <form
+                action="batalkan.php"
+                method="POST"
+                onsubmit="return confirm('Yakin ingin membatalkan reservasi ini?');">
+                <input type="hidden" name="id" value="<?= $data['id']; ?>">
+
+                <button
+                  type="submit"
+                  class="px-3 py-1 text-xs font-semibold text-white transition bg-red-600 rounded-lg hover:bg-red-700">
+                  Batalkan
+                </button>
+              </form>
+            <?php endif; ?>
+          </div>
         </div>
 
         <div>
@@ -169,49 +185,86 @@ $statusClass = match ($data['status']) {
 
       <!-- KEPERLUAN -->
       <div>
-        <p class="text-sm text-slate-500 mb-1">Keperluan</p>
-        <div class="bg-slate-50 border rounded-xl p-4 text-slate-700">
+        <p class="mb-1 text-sm text-slate-500">Keperluan</p>
+        <div class="p-4 border bg-slate-50 rounded-xl text-slate-700">
           <?= nl2br(htmlspecialchars($data['keperluan'])); ?>
         </div>
       </div>
 
       <!-- FASILITAS RUANGAN -->
       <div>
-        <h3 class="font-semibold text-slate-800 mb-3">Fasilitas Ruangan</h3>
+        <h3 class="mb-3 font-semibold text-slate-800">Fasilitas Ruangan</h3>
         <div class="flex flex-wrap gap-2">
           <?php if (mysqli_num_rows($fasilitas_ruangan) > 0): ?>
             <?php while ($f = mysqli_fetch_assoc($fasilitas_ruangan)): ?>
-              <span class="px-3 py-1 bg-slate-100 rounded-full text-sm">
+              <span class="px-3 py-1 text-sm rounded-full bg-slate-100">
                 <?= htmlspecialchars($f['nama']); ?> (<?= $f['qty']; ?>)
               </span>
             <?php endwhile; ?>
           <?php else: ?>
-            <span class="text-slate-500 italic">Tidak ada fasilitas</span>
+            <span class="italic text-slate-500">Tidak ada fasilitas</span>
           <?php endif; ?>
         </div>
       </div>
 
       <!-- FASILITAS DIPESAN -->
       <div>
-        <h3 class="font-semibold text-slate-800 mb-3">Fasilitas Digunakan</h3>
+        <h3 class="mb-3 font-semibold text-slate-800">Fasilitas Digunakan</h3>
         <div class="flex flex-wrap gap-2">
           <?php if (mysqli_num_rows($fasilitas_reservasi) > 0): ?>
             <?php while ($f = mysqli_fetch_assoc($fasilitas_reservasi)): ?>
-              <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+              <span class="px-3 py-1 text-sm text-blue-700 bg-blue-100 rounded-full">
                 <?= htmlspecialchars($f['nama']); ?> (<?= $f['qty']; ?>)
               </span>
             <?php endwhile; ?>
           <?php else: ?>
-            <span class="text-slate-500 italic">Tidak ada fasilitas khusus</span>
+            <span class="italic text-slate-500">Tidak ada fasilitas khusus</span>
           <?php endif; ?>
         </div>
       </div>
 
+      <!-- SURAT PENGANTAR -->
+      <?php if (!empty($data['surat_pengantar'])): ?>
+        <div>
+          <p class="mb-2 text-sm text-slate-500">Surat Pengantar</p>
+
+          <div class="flex items-center gap-3 p-4 border bg-slate-50 rounded-xl">
+            <!-- ICON -->
+            <svg xmlns="http://www.w3.org/2000/svg"
+              class="w-6 h-6 text-red-600"
+              fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4v12m0 0l-3-3m3 3l3-3M6 20h12" />
+            </svg>
+
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-slate-800">
+                <?= htmlspecialchars($data['surat_pengantar']); ?>
+              </p>
+              <p class="text-xs text-slate-500">Dokumen pendukung reservasi</p>
+            </div>
+
+            <a
+              href="../../uploads/surat/<?= urlencode($data['surat_pengantar']); ?>"
+              target="_blank"
+              class="px-3 py-1 text-sm font-semibold text-white transition bg-blue-600 rounded-lg hover:bg-blue-700">
+              Lihat
+            </a>
+          </div>
+        </div>
+      <?php else: ?>
+        <div>
+          <p class="mb-1 text-sm text-slate-500">Surat Pengantar</p>
+          <p class="italic text-slate-400">Tidak ada surat pengantar</p>
+        </div>
+      <?php endif; ?>
+
       <!-- ALASAN TOLAK -->
       <?php if ($data['status'] === 'Ditolak' && $data['alasan_tolak']): ?>
         <div>
-          <h3 class="font-semibold text-red-700 mb-2">Alasan Penolakan</h3>
-          <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+          <h3 class="mb-2 font-semibold text-red-700">Alasan Penolakan</h3>
+          <div class="p-4 text-red-700 border border-red-200 bg-red-50 rounded-xl">
             <?= nl2br(htmlspecialchars($data['alasan_tolak'])); ?>
           </div>
         </div>
@@ -220,16 +273,16 @@ $statusClass = match ($data['status']) {
       <!-- TANDA TANGAN KEPALA BAGIAN -->
       <?php if ($data['status'] === 'Disetujui' && !empty($data['ttd_kabag'])): ?>
         <div class="pt-6 border-t">
-          <h3 class="font-semibold text-slate-800 mb-3">
+          <h3 class="mb-3 font-semibold text-slate-800">
             Tanda Tangan Kepala Bagian
           </h3>
 
           <div class="flex items-center gap-6">
-            <div class="border rounded-xl p-4 bg-slate-50">
+            <div class="p-4 border rounded-xl bg-slate-50">
               <img
                 src="../../uploads/ttd/<?= htmlspecialchars($data['ttd_kabag']); ?>"
                 alt="TTD Kepala Bagian"
-                class="max-h-32 object-contain"
+                class="object-contain max-h-32"
                 onerror="this.style.display='none'">
             </div>
 

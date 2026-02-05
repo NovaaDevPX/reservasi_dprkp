@@ -63,6 +63,7 @@ CREATE TABLE reservasi (
   jam_selesai TIME NOT NULL,
   keperluan TEXT NOT NULL,
   jumlah_peserta INT,
+  surat_pengantar VARCHAR(255) NOT NULL,
   status ENUM(
     'Menunggu Admin',
     'Menunggu Kepala Bagian',
@@ -174,42 +175,42 @@ INSERT INTO ruangan_fasilitas VALUES
 -- =========================================
 -- DUMMY RESERVASI (JAN–FEB 2026)
 -- =========================================
-INSERT INTO reservasi
-(user_id,ruangan_id,tanggal,jam_mulai,jam_selesai,keperluan,jumlah_peserta,status,kabag_id)
-SELECT
-  FLOOR(1 + RAND() * 9) AS user_id,
-  FLOOR(1 + RAND() * 6) AS ruangan_id,
-  DATE_ADD('2026-01-01', INTERVAL FLOOR(RAND() * 60) DAY),
-  '08:00',
-  '10:00',
-  'Rapat koordinasi kegiatan rutin',
-  FLOOR(5 + RAND() * 45),
-  ELT(FLOOR(1 + RAND() * 5),
-    'Menunggu Admin',
-    'Menunggu Kepala Bagian',
-    'Disetujui',
-    'Ditolak',
-    'Dibatalkan'
-  ),
-  12
-FROM information_schema.columns
-LIMIT 120;
+-- INSERT INTO reservasi
+-- (user_id,ruangan_id,tanggal,jam_mulai,jam_selesai,keperluan,jumlah_peserta,status,kabag_id)
+-- SELECT
+--   FLOOR(1 + RAND() * 9) AS user_id,
+--   FLOOR(1 + RAND() * 6) AS ruangan_id,
+--   DATE_ADD('2026-01-01', INTERVAL FLOOR(RAND() * 60) DAY),
+--   '08:00',
+--   '10:00',
+--   'Rapat koordinasi kegiatan rutin',
+--   FLOOR(5 + RAND() * 45),
+--   ELT(FLOOR(1 + RAND() * 5),
+--     'Menunggu Admin',
+--     'Menunggu Kepala Bagian',
+--     'Disetujui',
+--     'Ditolak',
+--     'Dibatalkan'
+--   ),
+--   12
+-- FROM information_schema.columns
+-- LIMIT 120;
 
 -- =========================================
 -- RESERVASI FASILITAS + QTY
 -- =========================================
-INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
-SELECT
-    r.id AS reservasi_id,
-    rf.fasilitas_id,
-    CASE
-        WHEN rf.fasilitas_id = 6 THEN LEAST(rf.qty, r.jumlah_peserta)
-        ELSE rf.qty
-    END AS qty
-FROM reservasi r
-JOIN ruangan_fasilitas rf 
-    ON rf.ruangan_id = r.ruangan_id
-WHERE r.status <> 'Ditolak';
+-- INSERT INTO reservasi_fasilitas (reservasi_id, fasilitas_id, qty)
+-- SELECT
+--     r.id AS reservasi_id,
+--     rf.fasilitas_id,
+--     CASE
+--         WHEN rf.fasilitas_id = 6 THEN LEAST(rf.qty, r.jumlah_peserta)
+--         ELSE rf.qty
+--     END AS qty
+-- FROM reservasi r
+-- JOIN ruangan_fasilitas rf 
+--     ON rf.ruangan_id = r.ruangan_id
+-- WHERE r.status <> 'Ditolak';
 
 
 INSERT INTO jadwal_blokir VALUES
