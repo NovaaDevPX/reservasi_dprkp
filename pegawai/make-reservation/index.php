@@ -452,46 +452,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ===================== */
     function loadJadwal() {
 
-      if (!ruangan.value || !tanggal.value) {
-        jadwal.innerHTML = '';
-        return;
-      }
+      // if (!ruangan.value || !tanggal.value) {
+      //   jadwal.innerHTML = '';
+      //   return;
+      // }
 
-      fetch(`?ajax=jadwal&ruangan_id=${ruangan.value}&tanggal=${tanggal.value}`)
-        .then(res => res.json())
-        .then(data => {
+      // fetch(`?ajax=jadwal&ruangan_id=${ruangan.value}&tanggal=${tanggal.value}`)
+      //   .then(res => res.json())
+      //   .then(data => {
 
-          if (data.length) {
+      //     if (data.length) {
 
-            jadwal.innerHTML =
-              `
-          <div class="p-3 border border-red-300 rounded bg-red-50">
-            <div class="mb-2 font-semibold text-red-700">
-              ⚠️ Pada tanggal ini sudah ada reservasi.
-            </div>
+      //       jadwal.innerHTML =
+      //         `
+      //     <div class="p-3 border border-red-300 rounded bg-red-50">
+      //       <div class="mb-2 font-semibold text-red-700">
+      //         ⚠️ Pada tanggal ini sudah ada reservasi.
+      //       </div>
 
-            <div class="mb-2 text-sm text-red-600">
-              Reservasi Anda mungkin akan ditolak jika waktu bertabrakan!
-            </div>
+      //       <div class="mb-2 text-sm text-red-600">
+      //         Reservasi Anda mungkin akan ditolak jika waktu bertabrakan!
+      //       </div>
 
-            <div class="text-sm text-red-600">
-              <strong>Ajuan Jam Yang Sudah Direservasi:</strong><br>
-              ${data.map(j => `• ${j.jam_mulai} - ${j.jam_selesai}`).join('<br>')}
-            </div>
-          </div>
-          `;
+      //       <div class="text-sm text-red-600">
+      //         <strong>Ajuan Jam Yang Sudah Direservasi:</strong><br>
+      //         ${data.map(j => `• ${j.jam_mulai} - ${j.jam_selesai}`).join('<br>')}
+      //       </div>
+      //     </div>
+      //     `;
 
-          } else {
+      //     } else {
 
-            jadwal.innerHTML =
-              `
-          <div class="p-3 text-green-700 border border-green-300 rounded bg-green-50">
-            🟢 Sepanjang hari tersedia
-          </div>
-          `;
-          }
+      //       jadwal.innerHTML =
+      //         `
+      //     <div class="p-3 text-green-700 border border-green-300 rounded bg-green-50">
+      //       🟢 Sepanjang hari tersedia
+      //     </div>
+      //     `;
+      //     }
 
-        });
+      //   });
     }
 
     /* =====================
