@@ -17,6 +17,7 @@ $user_id = $_SESSION['id_user'];
    AJAX: JADWAL
 ===================== */
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'jadwal') {
+
   $ruangan_id = (int)$_GET['ruangan_id'];
   $tanggal    = $_GET['tanggal'];
 
@@ -43,6 +44,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'jadwal') {
    AJAX: FASILITAS DEFAULT
 ===================== */
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'fasilitas_default') {
+
   $ruangan_id = (int)$_GET['ruangan_id'];
 
   $q = mysqli_query($koneksi, "
@@ -86,20 +88,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   /* =====================
      VALIDASI SURAT
   ===================== */
-  if (
-    !isset($_FILES['surat_pengantar']) ||
-    $_FILES['surat_pengantar']['error'] !== 0
-  ) {
+  if (!isset($_FILES['surat_pengantar']) || $_FILES['surat_pengantar']['error'] !== 0) {
     $error = "Surat pengantar wajib diunggah.";
   }
 
   if (!$error) {
+
     $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
     $maxSize = 2 * 1024 * 1024;
 
-    $file     = $_FILES['surat_pengantar'];
-    $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $size     = $file['size'];
+    $file = $_FILES['surat_pengantar'];
+    $ext  = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $size = $file['size'];
 
     if (!in_array($ext, $allowed)) {
       $error = "Format surat harus PDF, JPG, atau PNG.";
@@ -113,7 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   /* =====================
      VALIDASI LOGIC
   ===================== */
+  $isBentrok = false;
+
   if (!$error) {
+
     $r = mysqli_fetch_assoc(mysqli_query(
       $koneksi,
       "SELECT kapasitas FROM ruangan WHERE id=$ruangan_id"
@@ -127,20 +130,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $error = "Jam selesai harus lebih besar dari jam mulai.";
     }
 
-    $cek = mysqli_query($koneksi, "
-      SELECT id FROM reservasi
+    /* =====================
+       CEK BENTROK (TIDAK BLOKIR)
+    ===================== */
+    $cekBentrok = mysqli_query($koneksi, "
+      SELECT id
+      FROM reservasi
       WHERE ruangan_id=$ruangan_id
         AND tanggal='$tanggal'
         AND status!='Ditolak'
         AND ('$jam_mulai' < jam_selesai AND '$jam_selesai' > jam_mulai)
     ");
 
-    if (mysqli_num_rows($cek) > 0) {
-      $error = "Ruangan sudah digunakan pada jam tersebut.";
+    if (mysqli_num_rows($cekBentrok) > 0) {
+      $isBentrok = true;
     }
   }
 
   if (!$error) {
+
     mysqli_begin_transaction($koneksi);
 
     try {
@@ -192,6 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         foreach ($_POST['fasilitas'] as $fid) {
+
           $fid = (int)$fid;
           $qty = isset($_POST['qty'][$fid]) ? (int)$_POST['qty'][$fid] : 1;
 
@@ -203,45 +212,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
 
       /* =====================
-         NOTIFIKASI
+         NOTIFIKASI USER
       ===================== */
       mysqli_query($koneksi, "
-        INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
-        VALUES (
-          $user_id,
-          $reservasi_id,
-          'Reservasi Berhasil Dikirim',
-          'Reservasi Anda berhasil dibuat dan sedang menunggu persetujuan admin.'
-        )
-      ");
+  INSERT INTO notifikasi (user_id, reservasi_id, judul, pesan)
+  VALUES (
+    $user_id,
+    $reservasi_id,
+    'Reservasi Berhasil Dikirim',
+    'Reservasi Anda berhasil dibuat dan sedang menunggu persetujuan admin.'
+  )
+");
 
-      kirimNotifikasiByRole(
-        $koneksi,
-        ['admin'],
-        'Reservasi Baru',
-        'Terdapat pengajuan reservasi baru dengan surat pengantar.',
-        $reservasi_id
-      );
+      /* =====================
+       NOTIFIKASI ADMIN 
+      ===================== */
 
-      kirimNotifikasiByRole(
+      // Ambil nama ruangan
+      $ruanganData = mysqli_fetch_assoc(mysqli_query(
         $koneksi,
-        ['kepala_bagian'],
-        'Reservasi Baru',
-        'Pengajuan reservasi baru telah diajukan.',
-        $reservasi_id
-      );
+        "SELECT nama_ruangan FROM ruangan WHERE id=$ruangan_id"
+      ));
+
+      // Ambil nama pegawai
+      $pegawaiData = mysqli_fetch_assoc(mysqli_query(
+        $koneksi,
+        "SELECT nama FROM users WHERE id=$user_id"
+      ));
+
+      if ($isBentrok) {
+
+        // Jika bentrok → kirim notif khusus
+        kirimNotifikasiByRole(
+          $koneksi,
+          ['admin'],
+          '⚠️ Reservasi Bertabrakan',
+          "Reservasi oleh {$pegawaiData['nama']} pada ruangan {$ruanganData['nama_ruangan']} tanggal $tanggal ($jam_mulai - $jam_selesai) terdeteksi bertabrakan dengan jadwal lain.",
+          $reservasi_id
+        );
+      } else {
+
+        // Jika tidak bentrok → kirim notif normal
+        kirimNotifikasiByRole(
+          $koneksi,
+          ['admin'],
+          'Reservasi Baru',
+          "Pengajuan reservasi baru oleh {$pegawaiData['nama']} pada ruangan {$ruanganData['nama_ruangan']} tanggal $tanggal ($jam_mulai - $jam_selesai).",
+          $reservasi_id
+        );
+      }
 
       mysqli_commit($koneksi);
 
       header("Location: /reservasi_dprkp/pegawai/reservation-history/detail.php?id=$reservasi_id&success=add");
       exit;
     } catch (Exception $e) {
+
       mysqli_rollback($koneksi);
       $error = "Gagal menyimpan data.";
     }
   }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">
@@ -415,18 +448,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     /* =====================
-       JADWAL
+       Jadwal
     ===================== */
     function loadJadwal() {
-      if (!ruangan.value || !tanggal.value) return;
+
+      if (!ruangan.value || !tanggal.value) {
+        jadwal.innerHTML = '';
+        return;
+      }
 
       fetch(`?ajax=jadwal&ruangan_id=${ruangan.value}&tanggal=${tanggal.value}`)
         .then(res => res.json())
         .then(data => {
-          jadwal.innerHTML = data.length ?
-            '<span class="text-red-600">Terpakai:</span><br>' +
-            data.map(j => `• ${j.jam_mulai} - ${j.jam_selesai}`).join('<br>') :
-            '<span class="text-green-600">🟢 Sepanjang hari tersedia</span>';
+
+          if (data.length) {
+
+            jadwal.innerHTML =
+              `
+          <div class="p-3 border border-red-300 rounded bg-red-50">
+            <div class="mb-2 font-semibold text-red-700">
+              ⚠️ Pada tanggal ini sudah ada reservasi.
+            </div>
+
+            <div class="mb-2 text-sm text-red-600">
+              Reservasi Anda mungkin akan ditolak jika waktu bertabrakan!
+            </div>
+
+            <div class="text-sm text-red-600">
+              <strong>Ajuan Jam Yang Sudah Direservasi:</strong><br>
+              ${data.map(j => `• ${j.jam_mulai} - ${j.jam_selesai}`).join('<br>')}
+            </div>
+          </div>
+          `;
+
+          } else {
+
+            jadwal.innerHTML =
+              `
+          <div class="p-3 text-green-700 border border-green-300 rounded bg-green-50">
+            🟢 Sepanjang hari tersedia
+          </div>
+          `;
+          }
+
         });
     }
 
